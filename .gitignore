@@ -1,0 +1,38 @@
+# Containerlab runtime artifacts
+clab-*/
+.state.clab.yaml
+topology-data.json
+.topology-data.json
+ansible-inventory.yml
+nornir-simple-inventory.yml
+nornir-inventory.yml
+ssh_config
+.addressbook
+hosts
+*.bak
+*.bak.*
+.*.bak
+
+# Dynamic TLS certificates and private keys generated at runtime
+*.key
+*.csr
+*.pem
+.tls/
+
+# Test outputs and logs
+test-results.json
+*.log
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# OS and Editor temporary files
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

@@ -1,0 +1,958 @@
+{
+  "freeTextAnnotations": [
+    {
+      "id": "text-title",
+      "text": "Campus EVPN-VXLAN Network Architecture — Anycast Multihoming",
+      "position": {
+        "x": 750,
+        "y": 15
+      },
+      "fontSize": 20,
+      "fontColor": "#38bdf8",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-core-badge",
+      "text": "Core Layer: BGP AS 65000 EVPN Route Reflectors & Tenant IP-VRF-1 Gateway",
+      "position": {
+        "x": 880,
+        "y": 80
+      },
+      "fontSize": 13,
+      "fontColor": "#93c5fd",
+      "fontWeight": "normal",
+      "textAlign": "center",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p1-header",
+      "text": "Aggregation Pair 1 (Anycast VTEP: 10.0.0.101)",
+      "position": {
+        "x": 90,
+        "y": 335
+      },
+      "fontSize": 15,
+      "fontColor": "#34d399",
+      "fontWeight": "bold",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p1-v101",
+      "text": "VLAN 101: 10.1.1.0/24 (VNI 10101, Anycast GW 10.1.1.1)",
+      "position": {
+        "x": 90,
+        "y": 575
+      },
+      "fontSize": 12,
+      "fontColor": "#a7f3d0",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p1-v102",
+      "text": "VLAN 102: 10.1.2.0/24 (VNI 10102, Anycast GW 10.1.2.1)",
+      "position": {
+        "x": 90,
+        "y": 755
+      },
+      "fontSize": 12,
+      "fontColor": "#a7f3d0",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p2-header",
+      "text": "Aggregation Pair 2 (Anycast VTEP: 10.0.0.102)",
+      "position": {
+        "x": 650,
+        "y": 335
+      },
+      "fontSize": 15,
+      "fontColor": "#22d3ee",
+      "fontWeight": "bold",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p2-v201",
+      "text": "VLAN 201: 10.2.1.0/24 (VNI 10201, Anycast GW 10.2.1.1)",
+      "position": {
+        "x": 650,
+        "y": 575
+      },
+      "fontSize": 12,
+      "fontColor": "#a5f3fc",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p2-v202",
+      "text": "VLAN 202: 10.2.2.0/24 (VNI 10202, Anycast GW 10.2.2.1)",
+      "position": {
+        "x": 650,
+        "y": 755
+      },
+      "fontSize": 12,
+      "fontColor": "#a5f3fc",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p3-header",
+      "text": "Aggregation Pair 3 (Anycast VTEP: 10.0.0.103)",
+      "position": {
+        "x": 1210,
+        "y": 335
+      },
+      "fontSize": 15,
+      "fontColor": "#c084fc",
+      "fontWeight": "bold",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p3-v301",
+      "text": "VLAN 301: 10.3.1.0/24 (VNI 10301, Anycast GW 10.3.1.1)",
+      "position": {
+        "x": 1210,
+        "y": 575
+      },
+      "fontSize": 12,
+      "fontColor": "#e9d5ff",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p3-v302",
+      "text": "VLAN 302: 10.3.2.0/24 (VNI 10302, Anycast GW 10.3.2.1)",
+      "position": {
+        "x": 1210,
+        "y": 755
+      },
+      "fontSize": 12,
+      "fontColor": "#e9d5ff",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p4-header",
+      "text": "Aggregation Pair 4 (Anycast VTEP: 10.0.0.104)",
+      "position": {
+        "x": 1770,
+        "y": 335
+      },
+      "fontSize": 15,
+      "fontColor": "#fbbf24",
+      "fontWeight": "bold",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p4-v401",
+      "text": "VLAN 401: 10.4.1.0/24 (VNI 10401, Anycast GW 10.4.1.1)",
+      "position": {
+        "x": 1770,
+        "y": 575
+      },
+      "fontSize": 12,
+      "fontColor": "#fde68a",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-p4-v402",
+      "text": "VLAN 402: 10.4.2.0/24 (VNI 10402, Anycast GW 10.4.2.1)",
+      "position": {
+        "x": 1770,
+        "y": 755
+      },
+      "fontSize": 12,
+      "fontColor": "#fde68a",
+      "fontWeight": "normal",
+      "textAlign": "left",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "text-notes-footer",
+      "text": "Underlay: OSPFv2 (Area 0.0.0.0) | Overlay: iBGP EVPN (AS 65000) | Dual ISL Cores & Agg Partners | Anycast Multi-Homing (802.3ad LACP) | Filtered Type-5 /24 to Cores, /32 Host Routes isolated across ISL",
+      "position": {
+        "x": 420,
+        "y": 940
+      },
+      "fontSize": 13,
+      "fontColor": "#94a3b8",
+      "fontWeight": "normal",
+      "textAlign": "center",
+      "fontFamily": "Arial"
+    },
+    {
+      "id": "ip-h1-v101",
+      "text": "10.1.1.11",
+      "position": {
+        "x": 106.71043352311113,
+        "y": 675.0328251423333
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v101",
+      "text": "10.1.1.10",
+      "position": {
+        "x": 262.51641257116665,
+        "y": 675.0328251423334
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v101",
+      "text": "10.1.1.12",
+      "position": {
+        "x": 423.35521676155554,
+        "y": 675.8716293327223
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h1-v102",
+      "text": "10.1.2.11",
+      "position": {
+        "x": 105.03282514233334,
+        "y": 857.5492377135
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v102",
+      "text": "10.1.2.10",
+      "position": {
+        "x": 265.03282514233337,
+        "y": 856.7104335231111
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v102",
+      "text": "10.1.2.12",
+      "position": {
+        "x": 425.03282514233337,
+        "y": 858.3880419038888
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h1-v201",
+      "text": "10.2.1.11",
+      "position": {
+        "x": 664.3813287626291,
+        "y": 675.8417716835056
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v201",
+      "text": "10.2.1.10",
+      "position": {
+        "x": 825.1115502230674,
+        "y": 675.8417716835056
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v201",
+      "text": "10.2.1.12",
+      "position": {
+        "x": 985.1115502230675,
+        "y": 675.8417716835056
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h1-v202",
+      "text": "10.2.2.11",
+      "position": {
+        "x": 665.220132953018,
+        "y": 856.8977413337959
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v202",
+      "text": "10.2.2.10",
+      "position": {
+        "x": 825.2201329530182,
+        "y": 856.6805758738944
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v202",
+      "text": "10.2.2.12",
+      "position": {
+        "x": 984.3813287626292,
+        "y": 854.3813287626292
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h1-v301",
+      "text": "10.3.1.11",
+      "position": {
+        "x": 1226.710433523111,
+        "y": 675.0328251423334
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v301",
+      "text": "10.3.1.10",
+      "position": {
+        "x": 1385.871629332722,
+        "y": 674.1940209519445
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v301",
+      "text": "10.3.1.12",
+      "position": {
+        "x": 1545.5570777613266,
+        "y": 674.1940209519445
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h1-v302",
+      "text": "10.3.2.11",
+      "position": {
+        "x": 1224.1940209519444,
+        "y": 855.0328251423334
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v302",
+      "text": "10.3.2.10",
+      "position": {
+        "x": 1386.710433523111,
+        "y": 855.0328251423334
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v302",
+      "text": "10.3.2.12",
+      "position": {
+        "x": 1544.1940209519444,
+        "y": 855.0328251423333
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h1-v401",
+      "text": "10.4.1.11",
+      "position": {
+        "x": 1785.085557629723,
+        "y": 673.8141682222924
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v401",
+      "text": "10.4.1.10",
+      "position": {
+        "x": 1945.7212523334385,
+        "y": 674.4498629260078
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v401",
+      "text": "10.4.1.12",
+      "position": {
+        "x": 2105.7212523334383,
+        "y": 675.0855576297232
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h1-v402",
+      "text": "10.4.2.11",
+      "position": {
+        "x": 1784.4498629260077,
+        "y": 855.7212523334385
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-hm-v402",
+      "text": "10.4.2.10",
+      "position": {
+        "x": 1945.7212523334385,
+        "y": 855.7212523334385
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    },
+    {
+      "id": "ip-h2-v402",
+      "text": "10.4.2.12",
+      "position": {
+        "x": 2106.356947037154,
+        "y": 855.0855576297231
+      },
+      "fontSize": 11,
+      "fontColor": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center",
+      "fontFamily": "Arial",
+      "width": 80
+    }
+  ],
+  "freeShapeAnnotations": [
+    {
+      "id": "shape-core-frame",
+      "shapeType": "rectangle",
+      "position": {
+        "x": 860,
+        "y": 65
+      },
+      "width": 520,
+      "height": 170,
+      "fillColor": "#1e293b",
+      "fillOpacity": 0.15,
+      "borderColor": "#3b82f6",
+      "borderWidth": 2,
+      "borderStyle": "solid",
+      "cornerRadius": 10,
+      "zIndex": -1
+    },
+    {
+      "id": "shape-p1-frame",
+      "shapeType": "rectangle",
+      "position": {
+        "x": 70,
+        "y": 320
+      },
+      "width": 440,
+      "height": 600,
+      "fillColor": "#0f172a",
+      "fillOpacity": 0.12,
+      "borderColor": "#10b981",
+      "borderWidth": 2,
+      "borderStyle": "solid",
+      "cornerRadius": 10,
+      "zIndex": -1
+    },
+    {
+      "id": "shape-p2-frame",
+      "shapeType": "rectangle",
+      "position": {
+        "x": 630,
+        "y": 320
+      },
+      "width": 440,
+      "height": 600,
+      "fillColor": "#0f172a",
+      "fillOpacity": 0.12,
+      "borderColor": "#06b6d4",
+      "borderWidth": 2,
+      "borderStyle": "solid",
+      "cornerRadius": 10,
+      "zIndex": -1
+    },
+    {
+      "id": "shape-p3-frame",
+      "shapeType": "rectangle",
+      "position": {
+        "x": 1190,
+        "y": 320
+      },
+      "width": 440,
+      "height": 600,
+      "fillColor": "#0f172a",
+      "fillOpacity": 0.12,
+      "borderColor": "#8b5cf6",
+      "borderWidth": 2,
+      "borderStyle": "solid",
+      "cornerRadius": 10,
+      "zIndex": -1
+    },
+    {
+      "id": "shape-p4-frame",
+      "shapeType": "rectangle",
+      "position": {
+        "x": 1750,
+        "y": 320
+      },
+      "width": 440,
+      "height": 600,
+      "fillColor": "#0f172a",
+      "fillOpacity": 0.12,
+      "borderColor": "#f59e0b",
+      "borderWidth": 2,
+      "borderStyle": "solid",
+      "cornerRadius": 10,
+      "zIndex": -1
+    }
+  ],
+  "trafficRateAnnotations": [],
+  "groupStyleAnnotations": [],
+  "networkNodeAnnotations": [],
+  "nodeAnnotations": [
+    {
+      "id": "core-1",
+      "position": {
+        "x": 950,
+        "y": 140
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "left"
+    },
+    {
+      "id": "core-2",
+      "position": {
+        "x": 1290,
+        "y": 140
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "right"
+    },
+    {
+      "id": "agg-1",
+      "position": {
+        "x": 170,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "left"
+    },
+    {
+      "id": "agg-2",
+      "position": {
+        "x": 390,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "right"
+    },
+    {
+      "id": "h1-v101",
+      "position": {
+        "x": 120,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v101",
+      "position": {
+        "x": 280,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v101",
+      "position": {
+        "x": 440,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h1-v102",
+      "position": {
+        "x": 120,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v102",
+      "position": {
+        "x": 280,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v102",
+      "position": {
+        "x": 440,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "agg-3",
+      "position": {
+        "x": 730,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "left"
+    },
+    {
+      "id": "agg-4",
+      "position": {
+        "x": 950,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "right"
+    },
+    {
+      "id": "h1-v201",
+      "position": {
+        "x": 680,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v201",
+      "position": {
+        "x": 840,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v201",
+      "position": {
+        "x": 1000,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h1-v202",
+      "position": {
+        "x": 680,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v202",
+      "position": {
+        "x": 840,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v202",
+      "position": {
+        "x": 1000,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "agg-5",
+      "position": {
+        "x": 1290,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "left"
+    },
+    {
+      "id": "agg-6",
+      "position": {
+        "x": 1510,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "right"
+    },
+    {
+      "id": "h1-v301",
+      "position": {
+        "x": 1240,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v301",
+      "position": {
+        "x": 1400,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v301",
+      "position": {
+        "x": 1560,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h1-v302",
+      "position": {
+        "x": 1240,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v302",
+      "position": {
+        "x": 1400,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v302",
+      "position": {
+        "x": 1560,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "agg-7",
+      "position": {
+        "x": 1850,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "left"
+    },
+    {
+      "id": "agg-8",
+      "position": {
+        "x": 2070,
+        "y": 400
+      },
+      "icon": "router",
+      "interfacePattern": "e1-{n}",
+      "labelPosition": "right"
+    },
+    {
+      "id": "h1-v401",
+      "position": {
+        "x": 1800,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v401",
+      "position": {
+        "x": 1960,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v401",
+      "position": {
+        "x": 2120,
+        "y": 620
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h1-v402",
+      "position": {
+        "x": 1800,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "hm-v402",
+      "position": {
+        "x": 1960,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    },
+    {
+      "id": "h2-v402",
+      "position": {
+        "x": 2120,
+        "y": 800
+      },
+      "icon": "client",
+      "interfacePattern": "eth{n}"
+    }
+  ],
+  "edgeAnnotations": [],
+  "aliasEndpointAnnotations": [],
+  "viewerSettings": {
+    "style": "telemetry-style",
+    "linkLabelMode": "telemetry-style",
+    "lastNonTelemetryLinkLabelMode": "show-all",
+    "telemetryNodeSizePx": 51,
+    "telemetryInterfaceSizePercent": 75,
+    "showRateLabels": false,
+    "autoCreateTrafficRateAnnotations": false,
+    "gridLineWidth": 0.5,
+    "gridStyle": "dotted",
+    "gridColor": null,
+    "gridBgColor": null
+  }
+}

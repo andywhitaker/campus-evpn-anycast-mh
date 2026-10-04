@@ -1,0 +1,390 @@
+name: campus-evpn-anycast-mh
+
+mgmt:
+  network: campus-mgmt
+  ipv4-subnet: 172.50.50.0/24
+
+topology:
+  kinds:
+    nokia_srlinux:
+      image: ghcr.io/nokia/srlinux:latest
+      type: ixr-d2l
+    linux:
+      image: ghcr.io/srl-labs/network-multitool:latest
+      privileged: true
+      binds:
+        - scripts/ping_hosts:/usr/local/bin/ping_hosts:ro
+
+  nodes:
+    # ==========================================================================
+    # Core Routers (EVPN Route Reflectors)
+    # ==========================================================================
+    core-1:
+      kind: nokia_srlinux
+      group: "Core Layer"
+      startup-config: configs/core-1.cfg
+
+    core-2:
+      kind: nokia_srlinux
+      group: "Core Layer"
+      startup-config: configs/core-2.cfg
+
+    # ==========================================================================
+    # Aggregation Routers (Pairs 1 to 4)
+    # ==========================================================================
+    # Pair 1 (VLAN 101, VLAN 102)
+    agg-1:
+      kind: nokia_srlinux
+      group: "Pair 1"
+      startup-config: configs/agg-1.cfg
+
+    agg-2:
+      kind: nokia_srlinux
+      group: "Pair 1"
+      startup-config: configs/agg-2.cfg
+
+    # Pair 2 (VLAN 201, VLAN 202)
+    agg-3:
+      kind: nokia_srlinux
+      group: "Pair 2"
+      startup-config: configs/agg-3.cfg
+
+    agg-4:
+      kind: nokia_srlinux
+      group: "Pair 2"
+      startup-config: configs/agg-4.cfg
+
+    # Pair 3 (VLAN 301, VLAN 302)
+    agg-5:
+      kind: nokia_srlinux
+      group: "Pair 3"
+      startup-config: configs/agg-5.cfg
+
+    agg-6:
+      kind: nokia_srlinux
+      group: "Pair 3"
+      startup-config: configs/agg-6.cfg
+
+    # Pair 4 (VLAN 401, VLAN 402)
+    agg-7:
+      kind: nokia_srlinux
+      group: "Pair 4"
+      startup-config: configs/agg-7.cfg
+
+    agg-8:
+      kind: nokia_srlinux
+      group: "Pair 4"
+      startup-config: configs/agg-8.cfg
+
+    # ==========================================================================
+    # Linux Multitool Hosts (24 hosts: 6 per pair)
+    # ==========================================================================
+    # Pair 1 Hosts
+    h1-v101:
+      kind: linux
+      group: "Pair 1"
+      exec:
+        - ip addr add 10.1.1.11/24 dev eth1
+        - ip route replace default via 10.1.1.1 dev eth1
+    h2-v101:
+      kind: linux
+      group: "Pair 1"
+      exec:
+        - ip addr add 10.1.1.12/24 dev eth1
+        - ip route replace default via 10.1.1.1 dev eth1
+    hm-v101:
+      kind: linux
+      group: "Pair 1"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.1.1.10/24 dev bond0
+        - ip route replace default via 10.1.1.1 dev bond0
+    h1-v102:
+      kind: linux
+      group: "Pair 1"
+      exec:
+        - ip addr add 10.1.2.11/24 dev eth1
+        - ip route replace default via 10.1.2.1 dev eth1
+    h2-v102:
+      kind: linux
+      group: "Pair 1"
+      exec:
+        - ip addr add 10.1.2.12/24 dev eth1
+        - ip route replace default via 10.1.2.1 dev eth1
+    hm-v102:
+      kind: linux
+      group: "Pair 1"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.1.2.10/24 dev bond0
+        - ip route replace default via 10.1.2.1 dev bond0
+
+    # Pair 2 Hosts
+    h1-v201:
+      kind: linux
+      group: "Pair 2"
+      exec:
+        - ip addr add 10.2.1.11/24 dev eth1
+        - ip route replace default via 10.2.1.1 dev eth1
+    h2-v201:
+      kind: linux
+      group: "Pair 2"
+      exec:
+        - ip addr add 10.2.1.12/24 dev eth1
+        - ip route replace default via 10.2.1.1 dev eth1
+    hm-v201:
+      kind: linux
+      group: "Pair 2"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.2.1.10/24 dev bond0
+        - ip route replace default via 10.2.1.1 dev bond0
+    h1-v202:
+      kind: linux
+      group: "Pair 2"
+      exec:
+        - ip addr add 10.2.2.11/24 dev eth1
+        - ip route replace default via 10.2.2.1 dev eth1
+    h2-v202:
+      kind: linux
+      group: "Pair 2"
+      exec:
+        - ip addr add 10.2.2.12/24 dev eth1
+        - ip route replace default via 10.2.2.1 dev eth1
+    hm-v202:
+      kind: linux
+      group: "Pair 2"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.2.2.10/24 dev bond0
+        - ip route replace default via 10.2.2.1 dev bond0
+
+    # Pair 3 Hosts
+    h1-v301:
+      kind: linux
+      group: "Pair 3"
+      exec:
+        - ip addr add 10.3.1.11/24 dev eth1
+        - ip route replace default via 10.3.1.1 dev eth1
+    h2-v301:
+      kind: linux
+      group: "Pair 3"
+      exec:
+        - ip addr add 10.3.1.12/24 dev eth1
+        - ip route replace default via 10.3.1.1 dev eth1
+    hm-v301:
+      kind: linux
+      group: "Pair 3"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.3.1.10/24 dev bond0
+        - ip route replace default via 10.3.1.1 dev bond0
+    h1-v302:
+      kind: linux
+      group: "Pair 3"
+      exec:
+        - ip addr add 10.3.2.11/24 dev eth1
+        - ip route replace default via 10.3.2.1 dev eth1
+    h2-v302:
+      kind: linux
+      group: "Pair 3"
+      exec:
+        - ip addr add 10.3.2.12/24 dev eth1
+        - ip route replace default via 10.3.2.1 dev eth1
+    hm-v302:
+      kind: linux
+      group: "Pair 3"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.3.2.10/24 dev bond0
+        - ip route replace default via 10.3.2.1 dev bond0
+
+    # Pair 4 Hosts
+    h1-v401:
+      kind: linux
+      group: "Pair 4"
+      exec:
+        - ip addr add 10.4.1.11/24 dev eth1
+        - ip route replace default via 10.4.1.1 dev eth1
+    h2-v401:
+      kind: linux
+      group: "Pair 4"
+      exec:
+        - ip addr add 10.4.1.12/24 dev eth1
+        - ip route replace default via 10.4.1.1 dev eth1
+    hm-v401:
+      kind: linux
+      group: "Pair 4"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.4.1.10/24 dev bond0
+        - ip route replace default via 10.4.1.1 dev bond0
+    h1-v402:
+      kind: linux
+      group: "Pair 4"
+      exec:
+        - ip addr add 10.4.2.11/24 dev eth1
+        - ip route replace default via 10.4.2.1 dev eth1
+    h2-v402:
+      kind: linux
+      group: "Pair 4"
+      exec:
+        - ip addr add 10.4.2.12/24 dev eth1
+        - ip route replace default via 10.4.2.1 dev eth1
+    hm-v402:
+      kind: linux
+      group: "Pair 4"
+      exec:
+        - ip link add bond0 type bond mode 802.3ad lacp_rate fast
+          xmit_hash_policy layer3+4
+        - ip link set eth1 down
+        - ip link set eth2 down
+        - ip link set eth1 master bond0
+        - ip link set eth2 master bond0
+        - ip link set eth1 up
+        - ip link set eth2 up
+        - ip link set bond0 up
+        - ip addr add 10.4.2.10/24 dev bond0
+        - ip route replace default via 10.4.2.1 dev bond0
+
+  links:
+    # ==========================================================================
+    # Core Inter-Switch Links (ISL)
+    # ==========================================================================
+    - endpoints: [ "core-1:e1-1", "core-2:e1-1" ]
+    - endpoints: [ "core-1:e1-2", "core-2:e1-2" ]
+
+    # ==========================================================================
+    # Core Uplinks from Aggregations (Single uplink per Agg to assigned Core)
+    # ==========================================================================
+    - endpoints: [ "core-1:e1-3", "agg-1:e1-3" ]
+    - endpoints: [ "core-2:e1-3", "agg-2:e1-3" ]
+    - endpoints: [ "core-1:e1-4", "agg-3:e1-3" ]
+    - endpoints: [ "core-2:e1-4", "agg-4:e1-3" ]
+    - endpoints: [ "core-1:e1-5", "agg-5:e1-3" ]
+    - endpoints: [ "core-2:e1-5", "agg-6:e1-3" ]
+    - endpoints: [ "core-1:e1-6", "agg-7:e1-3" ]
+    - endpoints: [ "core-2:e1-6", "agg-8:e1-3" ]
+
+    # ==========================================================================
+    # Aggregation Inter-Switch Links (2 ISL links per pair)
+    # ==========================================================================
+    # Pair 1 ISL
+    - endpoints: [ "agg-1:e1-1", "agg-2:e1-1" ]
+    - endpoints: [ "agg-1:e1-2", "agg-2:e1-2" ]
+
+    # Pair 2 ISL
+    - endpoints: [ "agg-3:e1-1", "agg-4:e1-1" ]
+    - endpoints: [ "agg-3:e1-2", "agg-4:e1-2" ]
+
+    # Pair 3 ISL
+    - endpoints: [ "agg-5:e1-1", "agg-6:e1-1" ]
+    - endpoints: [ "agg-5:e1-2", "agg-6:e1-2" ]
+
+    # Pair 4 ISL
+    - endpoints: [ "agg-7:e1-1", "agg-8:e1-1" ]
+    - endpoints: [ "agg-7:e1-2", "agg-8:e1-2" ]
+
+    # ==========================================================================
+    # Pair 1 Host Connections
+    # ==========================================================================
+    - endpoints: [ "h1-v101:eth1", "agg-1:e1-4" ]
+    - endpoints: [ "h2-v101:eth1", "agg-2:e1-4" ]
+    - endpoints: [ "hm-v101:eth1", "agg-1:e1-6" ]
+    - endpoints: [ "hm-v101:eth2", "agg-2:e1-6" ]
+    - endpoints: [ "h1-v102:eth1", "agg-1:e1-5" ]
+    - endpoints: [ "h2-v102:eth1", "agg-2:e1-5" ]
+    - endpoints: [ "hm-v102:eth1", "agg-1:e1-7" ]
+    - endpoints: [ "hm-v102:eth2", "agg-2:e1-7" ]
+
+    # ==========================================================================
+    # Pair 2 Host Connections
+    # ==========================================================================
+    - endpoints: [ "h1-v201:eth1", "agg-3:e1-4" ]
+    - endpoints: [ "h2-v201:eth1", "agg-4:e1-4" ]
+    - endpoints: [ "hm-v201:eth1", "agg-3:e1-6" ]
+    - endpoints: [ "hm-v201:eth2", "agg-4:e1-6" ]
+    - endpoints: [ "h1-v202:eth1", "agg-3:e1-5" ]
+    - endpoints: [ "h2-v202:eth1", "agg-4:e1-5" ]
+    - endpoints: [ "hm-v202:eth1", "agg-3:e1-7" ]
+    - endpoints: [ "hm-v202:eth2", "agg-4:e1-7" ]
+
+    # ==========================================================================
+    # Pair 3 Host Connections
+    # ==========================================================================
+    - endpoints: [ "h1-v301:eth1", "agg-5:e1-4" ]
+    - endpoints: [ "h2-v301:eth1", "agg-6:e1-4" ]
+    - endpoints: [ "hm-v301:eth1", "agg-5:e1-6" ]
+    - endpoints: [ "hm-v301:eth2", "agg-6:e1-6" ]
+    - endpoints: [ "h1-v302:eth1", "agg-5:e1-5" ]
+    - endpoints: [ "h2-v302:eth1", "agg-6:e1-5" ]
+    - endpoints: [ "hm-v302:eth1", "agg-5:e1-7" ]
+    - endpoints: [ "hm-v302:eth2", "agg-6:e1-7" ]
+
+    # ==========================================================================
+    # Pair 4 Host Connections
+    # ==========================================================================
+    - endpoints: [ "h1-v401:eth1", "agg-7:e1-4" ]
+    - endpoints: [ "h2-v401:eth1", "agg-8:e1-4" ]
+    - endpoints: [ "hm-v401:eth1", "agg-7:e1-6" ]
+    - endpoints: [ "hm-v401:eth2", "agg-8:e1-6" ]
+    - endpoints: [ "h1-v402:eth1", "agg-7:e1-5" ]
+    - endpoints: [ "h2-v402:eth1", "agg-8:e1-5" ]
+    - endpoints: [ "hm-v402:eth1", "agg-7:e1-7" ]
+    - endpoints: [ "hm-v402:eth2", "agg-8:e1-7" ]

@@ -1,0 +1,293 @@
+#!/usr/bin/env python3
+"""
+ping_hosts - Asynchronous Host-to-Host Traffic Generation & Connectivity Tool
+Campus Network EVPN-VXLAN Lab
+
+Mounts to Linux hosts in clab-campus-evpn-anycast-mh to allow any host to quickly and
+asynchronously test reachability to all other campus hosts.
+"""
+
+import sys
+import os
+import re
+import socket
+import argparse
+import subprocess
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# ANSI Color codes
+C_RESET   = "\033[0m"
+C_BOLD    = "\033[1m"
+C_GREEN   = "\033[32m"
+C_RED     = "\033[31m"
+C_YELLOW  = "\033[33m"
+C_BLUE    = "\033[34m"
+C_CYAN    = "\033[36m"
+C_MAGENTA = "\033[35m"
+
+# Full host directory across all 4 aggregation pairs
+ALL_HOSTS = [
+    # Pair 1 (VLAN 101, 102)
+    {"name": "h1-v101", "ip": "10.1.1.11", "pair": 1, "vlan": 101, "type": "Single-Homed (agg-1)"},
+    {"name": "h2-v101", "ip": "10.1.1.12", "pair": 1, "vlan": 101, "type": "Single-Homed (agg-2)"},
+    {"name": "hm-v101", "ip": "10.1.1.10", "pair": 1, "vlan": 101, "type": "Multihomed (Anycast LACP)"},
+    {"name": "h1-v102", "ip": "10.1.2.11", "pair": 1, "vlan": 102, "type": "Single-Homed (agg-1)"},
+    {"name": "h2-v102", "ip": "10.1.2.12", "pair": 1, "vlan": 102, "type": "Single-Homed (agg-2)"},
+    {"name": "hm-v102", "ip": "10.1.2.10", "pair": 1, "vlan": 102, "type": "Multihomed (Anycast LACP)"},
+
+    # Pair 2 (VLAN 201, 202)
+    {"name": "h1-v201", "ip": "10.2.1.11", "pair": 2, "vlan": 201, "type": "Single-Homed (agg-3)"},
+    {"name": "h2-v201", "ip": "10.2.1.12", "pair": 2, "vlan": 201, "type": "Single-Homed (agg-4)"},
+    {"name": "hm-v201", "ip": "10.2.1.10", "pair": 2, "vlan": 201, "type": "Multihomed (Anycast LACP)"},
+    {"name": "h1-v202", "ip": "10.2.2.11", "pair": 2, "vlan": 202, "type": "Single-Homed (agg-3)"},
+    {"name": "h2-v202", "ip": "10.2.2.12", "pair": 2, "vlan": 202, "type": "Single-Homed (agg-4)"},
+    {"name": "hm-v202", "ip": "10.2.2.10", "pair": 2, "vlan": 202, "type": "Multihomed (Anycast LACP)"},
+
+    # Pair 3 (VLAN 301, 302)
+    {"name": "h1-v301", "ip": "10.3.1.11", "pair": 3, "vlan": 301, "type": "Single-Homed (agg-5)"},
+    {"name": "h2-v301", "ip": "10.3.1.12", "pair": 3, "vlan": 301, "type": "Single-Homed (agg-6)"},
+    {"name": "hm-v301", "ip": "10.3.1.10", "pair": 3, "vlan": 301, "type": "Multihomed (Anycast LACP)"},
+    {"name": "h1-v302", "ip": "10.3.2.11", "pair": 3, "vlan": 302, "type": "Single-Homed (agg-5)"},
+    {"name": "h2-v302", "ip": "10.3.2.12", "pair": 3, "vlan": 302, "type": "Single-Homed (agg-6)"},
+    {"name": "hm-v302", "ip": "10.3.2.10", "pair": 3, "vlan": 302, "type": "Multihomed (Anycast LACP)"},
+
+    # Pair 4 (VLAN 401, 402)
+    {"name": "h1-v401", "ip": "10.4.1.11", "pair": 4, "vlan": 401, "type": "Single-Homed (agg-7)"},
+    {"name": "h2-v401", "ip": "10.4.1.12", "pair": 4, "vlan": 401, "type": "Single-Homed (agg-8)"},
+    {"name": "hm-v401", "ip": "10.4.1.10", "pair": 4, "vlan": 401, "type": "Multihomed (Anycast LACP)"},
+    {"name": "h1-v402", "ip": "10.4.2.11", "pair": 4, "vlan": 402, "type": "Single-Homed (agg-7)"},
+    {"name": "h2-v402", "ip": "10.4.2.12", "pair": 4, "vlan": 402, "type": "Single-Homed (agg-8)"},
+    {"name": "hm-v402", "ip": "10.4.2.10", "pair": 4, "vlan": 402, "type": "Multihomed (Anycast LACP)"},
+]
+
+def get_local_ips():
+    """Detect local IP addresses assigned to this host."""
+    local_ips = set()
+    try:
+        res = subprocess.run(["ip", "-4", "addr", "show"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        for line in res.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("inet "):
+                ip = line.split()[1].split("/")[0]
+                if not ip.startswith("127."):
+                    local_ips.add(ip)
+    except Exception:
+        pass
+    return local_ips
+
+def get_hostname():
+    """Get container hostname or short name."""
+    try:
+        return socket.gethostname()
+    except Exception:
+        return "unknown"
+
+def ping_target(target, count=5, timeout=1):
+    """
+    Ping a single target asynchronously.
+    count: number of ping packets (default: 5)
+    timeout: timeout in seconds per ping (default: 1)
+    """
+    ip = target["ip"]
+    cmd = [
+        "ping",
+        "-c", str(count),
+        "-W", str(timeout),
+        "-q",
+        ip
+    ]
+    start_t = time.time()
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=(count * timeout + 2))
+        elapsed = time.time() - start_t
+        out = proc.stdout + proc.stderr
+        
+        # Parse ping statistics:
+        # "X packets transmitted, Y received, Z% packet loss"
+        # "rtt min/avg/max/mdev = 0.123/0.456/0.789/0.050 ms"
+        tx, rx, loss = count, 0, 100.0
+        avg_rtt = None
+        
+        loss_match = re.search(r"(\d+)\s+(?:packets\s+)?transmitted,\s+(\d+)\s+(?:packets\s+)?received.*?(?:(\d+(?:\.\d+)?)%\s+packet\s+loss)?", out)
+        if loss_match:
+            tx = int(loss_match.group(1))
+            rx = int(loss_match.group(2))
+            if loss_match.group(3) is not None:
+                loss = float(loss_match.group(3))
+            else:
+                loss = 0.0 if tx == rx else ((tx - rx) / tx) * 100.0
+                
+        rtt_match = re.search(r"(?:rtt|round-trip)\s+min/avg/max.*?=\s*[\d.]+/([\d.]+)/", out)
+        if rtt_match:
+            avg_rtt = float(rtt_match.group(1))
+
+        passed = (rx > 0 and loss < 50.0)
+        return {
+            "target": target,
+            "passed": passed,
+            "tx": tx,
+            "rx": rx,
+            "loss": loss,
+            "avg_rtt": avg_rtt,
+            "elapsed": elapsed,
+            "error": None
+        }
+    except subprocess.TimeoutExpired:
+        return {
+            "target": target,
+            "passed": False,
+            "tx": count,
+            "rx": 0,
+            "loss": 100.0,
+            "avg_rtt": None,
+            "elapsed": time.time() - start_t,
+            "error": "TimeoutExpired"
+        }
+    except Exception as e:
+        return {
+            "target": target,
+            "passed": False,
+            "tx": count,
+            "rx": 0,
+            "loss": 100.0,
+            "avg_rtt": None,
+            "elapsed": time.time() - start_t,
+            "error": str(e)
+        }
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Fast asynchronous host-to-host ping tool for campus-evpn-anycast-mh lab"
+    )
+    parser.add_argument("-c", "--count", type=int, default=5, help="Number of ping packets to send (default: 5)")
+    parser.add_argument("-W", "--timeout", type=int, default=1, help="Timeout in seconds for each ping response (default: 1)")
+    parser.add_argument("-p", "--pair", type=int, choices=[1, 2, 3, 4], help="Limit ping tests to a specific Aggregation Pair (1-4)")
+    parser.add_argument("-v", "--vlan", type=int, help="Limit ping tests to a specific VLAN (e.g. 101, 102, 201...)")
+    parser.add_argument("-t", "--target", type=str, help="Ping a specific target name or IP only")
+    parser.add_argument("--include-self", action="store_true", help="Include this host's local IP in the ping run")
+    parser.add_argument("--src", type=str, default="h1-v101", help="When running from host machine, container to run pings from (default: h1-v101)")
+    args = parser.parse_args()
+
+    local_ips = get_local_ips()
+    hostname = get_hostname()
+
+    # Identify self
+    self_entry = None
+    for h in ALL_HOSTS:
+        if h["ip"] in local_ips or h["name"] == hostname:
+            self_entry = h
+            break
+
+    if self_entry is None:
+        # Running from host machine: proxy execution into the container
+        cname = f"clab-campus-evpn-anycast-mh-{args.src}" if not args.src.startswith("clab-") else args.src
+        fwd_args = []
+        skip_next = False
+        for a in sys.argv[1:]:
+            if skip_next:
+                skip_next = False
+                continue
+            if a == "--src":
+                skip_next = True
+                continue
+            if a.startswith("--src="):
+                continue
+            fwd_args.append(a)
+        cmd = ["docker", "exec", cname, "/usr/local/bin/ping_hosts"] + fwd_args
+        res = subprocess.run(cmd)
+        sys.exit(res.returncode)
+
+    # Build target list
+    targets = []
+    for h in ALL_HOSTS:
+        is_self = h["ip"] in local_ips
+        if is_self and not args.include_self:
+            continue
+        if args.pair and h["pair"] != args.pair:
+            continue
+        if args.vlan and h["vlan"] != args.vlan:
+            continue
+        if args.target:
+            if args.target not in (h["name"], h["ip"]):
+                continue
+        targets.append((h, is_self))
+
+    print(f"\n{C_BOLD}{C_CYAN}========================================================================================{C_RESET}")
+    print(f"{C_BOLD}{C_CYAN}  Campus EVPN-VXLAN Network — Asynchronous Multi-Host Ping Traffic Generator{C_RESET}")
+    print(f"{C_BOLD}{C_CYAN}========================================================================================{C_RESET}")
+    if self_entry:
+        print(f"  Source Host : {C_BOLD}{C_GREEN}{self_entry['name']}{C_RESET} ({self_entry['ip']}) | Pair {self_entry['pair']} | VLAN {self_entry['vlan']} [{self_entry['type']}]")
+    else:
+        local_ip_str = ", ".join(local_ips) if local_ips else "Unknown"
+        print(f"  Source Host : {C_BOLD}{hostname}{C_RESET} (IPs: {local_ip_str})")
+    print(f"  Parameters  : {C_BOLD}{args.count} packets{C_RESET} per target | {C_BOLD}{args.timeout}s timeout{C_RESET} per packet | {C_BOLD}Asynchronous (Concurrent){C_RESET}")
+    print(f"  Target Pool : {C_BOLD}{len(targets)} host targets{C_RESET}")
+    print(f"{C_BOLD}{C_CYAN}----------------------------------------------------------------------------------------{C_RESET}")
+
+    if not targets:
+        print(f"{C_YELLOW}No targets matched the given filters.{C_RESET}\n")
+        return
+
+    # Header
+    tbl_fmt = "  {:<10} | {:<5} | {:<5} | {:<12} | {:<4} | {:<4} | {:<6} | {:<9} | {:<8}"
+    print(C_BOLD + tbl_fmt.format("Target", "Pair", "VLAN", "IP Address", "Sent", "Recv", "Loss", "Avg RTT", "Status") + C_RESET)
+    print("  " + "-" * 84)
+
+    start_wall = time.time()
+    results = []
+
+    # Execute all pings concurrently using ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=min(32, max(len(targets), 1))) as executor:
+        future_map = {
+            executor.submit(ping_target, h, count=args.count, timeout=args.timeout): (h, is_self)
+            for h, is_self in targets
+        }
+        for future in as_completed(future_map):
+            h, is_self = future_map[future]
+            res = future.result()
+            results.append((h, res, is_self))
+
+    # Sort results by target Pair, then VLAN, then name
+    results.sort(key=lambda item: (item[0]["pair"], item[0]["vlan"], item[0]["name"]))
+
+    passed_count = 0
+    total_count = len(results)
+
+    for h, res, is_self in results:
+        t_name = h["name"]
+        t_pair = f"P{h['pair']}"
+        t_vlan = str(h["vlan"])
+        t_ip = h["ip"]
+        sent = str(res["tx"])
+        recv = str(res["rx"])
+        loss_str = f"{res['loss']:.0f}%"
+        rtt_str = f"{res['avg_rtt']:.2f} ms" if res["avg_rtt"] is not None else "N/A"
+        
+        if is_self:
+            status_str = f"{C_BLUE}[LOCAL]{C_RESET}"
+            passed_count += 1
+        elif res["passed"]:
+            status_str = f"{C_GREEN}[PASS]{C_RESET}"
+            passed_count += 1
+        else:
+            status_str = f"{C_RED}[FAIL]{C_RESET}"
+
+        print(tbl_fmt.format(t_name, t_pair, t_vlan, t_ip, sent, recv, loss_str, rtt_str, status_str))
+
+    total_duration = time.time() - start_wall
+
+    print("  " + "-" * 84)
+    pct = (passed_count / total_count * 100.0) if total_count > 0 else 0.0
+    summary_color = C_GREEN if passed_count == total_count else C_YELLOW if passed_count > 0 else C_RED
+
+    print(f"\n{C_BOLD}Execution Summary:{C_RESET}")
+    print(f"  Targets Tested : {total_count}")
+    print(f"  Success Rate   : {summary_color}{passed_count}/{total_count} ({pct:.1f}%){C_RESET}")
+    print(f"  Wall Duration  : {C_BOLD}{total_duration:.2f} seconds{C_RESET} (all {total_count} targets pinged concurrently)")
+    print(f"{C_BOLD}{C_CYAN}========================================================================================{C_RESET}\n")
+
+    sys.exit(0 if passed_count == total_count else 1)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,646 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 960" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #0b1120; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 24px; font-weight: 800; fill: #38bdf8; text-anchor: middle; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; fill: #94a3b8; text-anchor: middle; }
+      .frame { fill: #1e293b; fill-opacity: 0.55; stroke-width: 2; rx: 12; }
+      .frame-p1 { stroke: #10b981; }
+      .frame-p2 { stroke: #06b6d4; }
+      .frame-p3 { stroke: #8b5cf6; }
+      .frame-p4 { stroke: #f59e0b; }
+      .frame-core { stroke: #3b82f6; fill: #1e293b; fill-opacity: 0.7; rx: 12; stroke-width: 2; }
+      .header-p1 { font-family: sans-serif; font-size: 15px; font-weight: bold; fill: #34d399; }
+      .header-p2 { font-family: sans-serif; font-size: 15px; font-weight: bold; fill: #22d3ee; }
+      .header-p3 { font-family: sans-serif; font-size: 15px; font-weight: bold; fill: #a78bfa; }
+      .header-p4 { font-family: sans-serif; font-size: 15px; font-weight: bold; fill: #fbbf24; }
+      .header-core { font-family: sans-serif; font-size: 16px; font-weight: bold; fill: #60a5fa; text-anchor: middle; }
+      .node-name { font-family: sans-serif; font-size: 13px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .node-sub { font-family: sans-serif; font-size: 11px; fill: #cbd5e1; text-anchor: middle; }
+      .node-ip { font-family: sans-serif; font-size: 11px; font-weight: bold; fill: #38bdf8; text-anchor: middle; }
+      .host-ip { font-family: sans-serif; font-size: 11px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .link-core-isl { stroke: #f43f5e; stroke-width: 3; stroke-dasharray: 6,4; }
+      .link-agg-isl { stroke: #ec4899; stroke-width: 2.5; stroke-dasharray: 5,3; }
+      .link-uplink { stroke: #38bdf8; stroke-width: 2; opacity: 0.85; }
+      .link-host-single { stroke: #64748b; stroke-width: 2; }
+      .link-host-bond { stroke: #22c55e; stroke-width: 2.5; }
+      .port-label { font-family: monospace; font-size: 10px; fill: #94a3b8; text-anchor: middle; }
+      .badge-bg { fill: #0f172a; stroke: #334155; stroke-width: 1; rx: 4; }
+      .badge-text { font-family: sans-serif; font-size: 11px; fill: #e2e8f0; }
+      .legend-text { font-family: sans-serif; font-size: 12px; fill: #cbd5e1; }
+      .note-text { font-family: sans-serif; font-size: 12px; fill: #94a3b8; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="960" class="bg" />
+
+  <!-- Title Banner -->
+  <text x="800" y="38" class="title">Campus EVPN-VXLAN Network Architecture — Anycast Multihoming</text>
+  <text x="800" y="62" class="subtitle">Optimized for Campus Dual-Fiber Aggregation Cabling • OSPFv2 Underlay (Area 0) • iBGP EVPN (AS 65000) • Zero Spanning Tree</text>
+
+  <!-- ========================================================================= -->
+  <!-- CORE LAYER -->
+  <!-- ========================================================================= -->
+  <rect x="520" y="85" width="560" height="150" class="frame-core" />
+  <text x="800" y="112" class="header-core">Core Layer — EVPN Route Reflectors &amp; Tenant IP-VRF-1 Gateway</text>
+
+  <!-- Dual Core ISL Links -->
+  <line x1="680" y1="155" x2="920" y2="155" class="link-core-isl" />
+  <line x1="680" y1="165" x2="920" y2="165" class="link-core-isl" />
+  <rect x="745" y="148" width="110" height="24" rx="4" fill="#0f172a" stroke="#f43f5e" stroke-width="1"/>
+  <text x="800" y="164" font-family="sans-serif" font-size="11px" font-weight="bold" fill="#fda4af" text-anchor="middle">Core ISL</text>
+
+  <!-- core-1 -->
+  <g transform="translate(632, 136)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="656" y="202" class="node-name">core-1</text>
+  <text x="656" y="217" class="node-ip">10.0.0.1/32</text>
+
+  <!-- core-2 -->
+  <g transform="translate(920, 136)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="944" y="202" class="node-name">core-2</text>
+  <text x="944" y="217" class="node-ip">10.0.0.2/32</text>
+
+
+  <!-- ========================================================================= -->
+  <!-- UPLINKS (Campus Dual-Fiber Cabling Model) -->
+  <!-- Each Aggregation switch connects to only ONE core (no full leaf-spine mesh) -->
+  <!-- ========================================================================= -->
+  <!-- Pair 1 Uplinks -->
+  <line x1="200" y1="380" x2="640" y2="184" class="link-uplink" />
+  <line x1="320" y1="380" x2="930" y2="184" class="link-uplink" />
+
+  <!-- Pair 2 Uplinks -->
+  <line x1="560" y1="380" x2="650" y2="184" class="link-uplink" />
+  <line x1="680" y1="380" x2="940" y2="184" class="link-uplink" />
+
+  <!-- Pair 3 Uplinks -->
+  <line x1="920" y1="380" x2="660" y2="184" class="link-uplink" />
+  <line x1="1040" y1="380" x2="950" y2="184" class="link-uplink" />
+
+  <!-- Pair 4 Uplinks -->
+  <line x1="1280" y1="380" x2="670" y2="184" class="link-uplink" />
+  <line x1="1400" y1="380" x2="960" y2="184" class="link-uplink" />
+
+
+  <!-- ========================================================================= -->
+  <!-- AGGREGATION PAIR 1 (Building 1) -->
+  <!-- ========================================================================= -->
+  <rect x="60" y="320" width="340" height="520" class="frame frame-p1" />
+  <text x="80" y="348" class="header-p1">Building 1 — Anycast VTEP: 10.0.0.101</text>
+  <text x="80" y="366" font-family="sans-serif" font-size="11px" fill="#a7f3d0">VLAN 101 (10.1.1.0/24) • VLAN 102 (10.1.2.0/24)</text>
+
+  <!-- Agg-1 <-> Agg-2 Dual ISL -->
+  <line x1="210" y1="410" x2="310" y2="410" class="link-agg-isl" />
+  <line x1="210" y1="420" x2="310" y2="420" class="link-agg-isl" />
+  <rect x="235" y="405" width="50" height="20" rx="3" fill="#0f172a" stroke="#ec4899" stroke-width="1"/>
+  <text x="260" y="419" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#f472b6" text-anchor="middle">ISL Peer</text>
+
+  <!-- agg-1 -->
+  <g transform="translate(162, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="186" y="460" class="node-name">agg-1</text>
+  <text x="186" y="474" class="node-ip">10.0.0.11</text>
+
+  <!-- agg-2 -->
+  <g transform="translate(310, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="334" y="460" class="node-name">agg-2</text>
+  <text x="334" y="474" class="node-ip">10.0.0.12</text>
+
+  <!-- Pair 1 Host Row 1 (VLAN 101) -->
+  <!-- h1-v101 (Single homed agg-1) -->
+  <line x1="186" y1="444" x2="110" y2="540" class="link-host-single" />
+  <g transform="translate(89, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="110" y="598" class="node-name">h1-v101</text>
+  <text x="110" y="614" class="host-ip">10.1.1.11</text>
+
+  <!-- hm-v101 (Multihomed All-Active LACP LAG) -->
+  <line x1="186" y1="444" x2="230" y2="540" class="link-host-bond" />
+  <line x1="334" y1="444" x2="230" y2="540" class="link-host-bond" />
+  <g transform="translate(209, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="230" y="598" class="node-name">hm-v101</text>
+  <text x="230" y="614" class="host-ip">10.1.1.10</text>
+  <rect x="195" y="622" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="230" y="634" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-1)</text>
+
+  <!-- h2-v101 (Single homed agg-2) -->
+  <line x1="334" y1="444" x2="350" y2="540" class="link-host-single" />
+  <g transform="translate(329, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="350" y="598" class="node-name">h2-v101</text>
+  <text x="350" y="614" class="host-ip">10.1.1.12</text>
+
+  <!-- Pair 1 Host Row 2 (VLAN 102) -->
+  <!-- h1-v102 (Single homed agg-1) -->
+  <line x1="186" y1="444" x2="110" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(89, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="110" y="748" class="node-name">h1-v102</text>
+  <text x="110" y="764" class="host-ip">10.1.2.11</text>
+
+  <!-- hm-v102 (Multihomed All-Active LACP LAG) -->
+  <line x1="186" y1="444" x2="230" y2="690" class="link-host-bond" />
+  <line x1="334" y1="444" x2="230" y2="690" class="link-host-bond" />
+  <g transform="translate(209, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="230" y="748" class="node-name">hm-v102</text>
+  <text x="230" y="764" class="host-ip">10.1.2.10</text>
+  <rect x="195" y="772" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="230" y="784" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-2)</text>
+
+  <!-- h2-v102 (Single homed agg-2) -->
+  <line x1="334" y1="444" x2="350" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(329, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="350" y="748" class="node-name">h2-v102</text>
+  <text x="350" y="764" class="host-ip">10.1.2.12</text>
+
+
+  <!-- ========================================================================= -->
+  <!-- AGGREGATION PAIR 2 (Building 2) -->
+  <!-- ========================================================================= -->
+  <rect x="430" y="320" width="340" height="520" class="frame frame-p2" />
+  <text x="450" y="348" class="header-p2">Building 2 — Anycast VTEP: 10.0.0.102</text>
+  <text x="450" y="366" font-family="sans-serif" font-size="11px" fill="#a5f3fc">VLAN 201 (10.2.1.0/24) • VLAN 202 (10.2.2.0/24)</text>
+
+  <!-- Agg-3 <-> Agg-4 Dual ISL -->
+  <line x1="580" y1="410" x2="680" y2="410" class="link-agg-isl" />
+  <line x1="580" y1="420" x2="680" y2="420" class="link-agg-isl" />
+  <rect x="605" y="405" width="50" height="20" rx="3" fill="#0f172a" stroke="#ec4899" stroke-width="1"/>
+  <text x="630" y="419" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#f472b6" text-anchor="middle">ISL Peer</text>
+
+  <!-- agg-3 -->
+  <g transform="translate(532, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="556" y="460" class="node-name">agg-3</text>
+  <text x="556" y="474" class="node-ip">10.0.0.13</text>
+
+  <!-- agg-4 -->
+  <g transform="translate(680, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="704" y="460" class="node-name">agg-4</text>
+  <text x="704" y="474" class="node-ip">10.0.0.14</text>
+
+  <!-- Pair 2 Host Row 1 (VLAN 201) -->
+  <line x1="556" y1="444" x2="480" y2="540" class="link-host-single" />
+  <g transform="translate(459, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="480" y="598" class="node-name">h1-v201</text>
+  <text x="480" y="614" class="host-ip">10.2.1.11</text>
+
+  <line x1="556" y1="444" x2="600" y2="540" class="link-host-bond" />
+  <line x1="704" y1="444" x2="600" y2="540" class="link-host-bond" />
+  <g transform="translate(579, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="600" y="598" class="node-name">hm-v201</text>
+  <text x="600" y="614" class="host-ip">10.2.1.10</text>
+  <rect x="565" y="622" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="600" y="634" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-3)</text>
+
+  <line x1="704" y1="444" x2="720" y2="540" class="link-host-single" />
+  <g transform="translate(699, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="720" y="598" class="node-name">h2-v201</text>
+  <text x="720" y="614" class="host-ip">10.2.1.12</text>
+
+  <!-- Pair 2 Host Row 2 (VLAN 202) -->
+  <line x1="556" y1="444" x2="480" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(459, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="480" y="748" class="node-name">h1-v202</text>
+  <text x="480" y="764" class="host-ip">10.2.2.11</text>
+
+  <line x1="556" y1="444" x2="600" y2="690" class="link-host-bond" />
+  <line x1="704" y1="444" x2="600" y2="690" class="link-host-bond" />
+  <g transform="translate(579, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="600" y="748" class="node-name">hm-v202</text>
+  <text x="600" y="764" class="host-ip">10.2.2.10</text>
+  <rect x="565" y="772" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="600" y="784" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-4)</text>
+
+  <line x1="704" y1="444" x2="720" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(699, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="720" y="748" class="node-name">h2-v202</text>
+  <text x="720" y="764" class="host-ip">10.2.2.12</text>
+
+
+  <!-- ========================================================================= -->
+  <!-- AGGREGATION PAIR 3 (Building 3) -->
+  <!-- ========================================================================= -->
+  <rect x="800" y="320" width="340" height="520" class="frame frame-p3" />
+  <text x="820" y="348" class="header-p3">Building 3 — Anycast VTEP: 10.0.0.103</text>
+  <text x="820" y="366" font-family="sans-serif" font-size="11px" fill="#c4b5fd">VLAN 301 (10.3.1.0/24) • VLAN 302 (10.3.2.0/24)</text>
+
+  <!-- Agg-5 <-> Agg-6 Dual ISL -->
+  <line x1="950" y1="410" x2="1050" y2="410" class="link-agg-isl" />
+  <line x1="950" y1="420" x2="1050" y2="420" class="link-agg-isl" />
+  <rect x="975" y="405" width="50" height="20" rx="3" fill="#0f172a" stroke="#ec4899" stroke-width="1"/>
+  <text x="1000" y="419" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#f472b6" text-anchor="middle">ISL Peer</text>
+
+  <!-- agg-5 -->
+  <g transform="translate(902, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="926" y="460" class="node-name">agg-5</text>
+  <text x="926" y="474" class="node-ip">10.0.0.15</text>
+
+  <!-- agg-6 -->
+  <g transform="translate(1050, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="1074" y="460" class="node-name">agg-6</text>
+  <text x="1074" y="474" class="node-ip">10.0.0.16</text>
+
+  <!-- Pair 3 Hosts -->
+  <line x1="926" y1="444" x2="850" y2="540" class="link-host-single" />
+  <g transform="translate(829, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="850" y="598" class="node-name">h1-v301</text>
+  <text x="850" y="614" class="host-ip">10.3.1.11</text>
+
+  <line x1="926" y1="444" x2="970" y2="540" class="link-host-bond" />
+  <line x1="1074" y1="444" x2="970" y2="540" class="link-host-bond" />
+  <g transform="translate(949, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="970" y="598" class="node-name">hm-v301</text>
+  <text x="970" y="614" class="host-ip">10.3.1.10</text>
+  <rect x="935" y="622" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="970" y="634" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-5)</text>
+
+  <line x1="1074" y1="444" x2="1090" y2="540" class="link-host-single" />
+  <g transform="translate(1069, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1090" y="598" class="node-name">h2-v301</text>
+  <text x="1090" y="614" class="host-ip">10.3.1.12</text>
+
+  <line x1="926" y1="444" x2="850" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(829, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="850" y="748" class="node-name">h1-v302</text>
+  <text x="850" y="764" class="host-ip">10.3.2.11</text>
+
+  <line x1="926" y1="444" x2="970" y2="690" class="link-host-bond" />
+  <line x1="1074" y1="444" x2="970" y2="690" class="link-host-bond" />
+  <g transform="translate(949, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="970" y="748" class="node-name">hm-v302</text>
+  <text x="970" y="764" class="host-ip">10.3.2.10</text>
+  <rect x="935" y="772" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="970" y="784" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-6)</text>
+
+  <line x1="1074" y1="444" x2="1090" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(1069, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1090" y="748" class="node-name">h2-v302</text>
+  <text x="1090" y="764" class="host-ip">10.3.2.12</text>
+
+
+  <!-- ========================================================================= -->
+  <!-- AGGREGATION PAIR 4 (Building 4) -->
+  <!-- ========================================================================= -->
+  <rect x="1170" y="320" width="370" height="520" class="frame frame-p4" />
+  <text x="1190" y="348" class="header-p4">Building 4 — Anycast VTEP: 10.0.0.104</text>
+  <text x="1190" y="366" font-family="sans-serif" font-size="11px" fill="#fde68a">VLAN 401 (10.4.1.0/24) • VLAN 402 (10.4.2.0/24)</text>
+
+  <!-- Agg-7 <-> Agg-8 Dual ISL -->
+  <line x1="1320" y1="410" x2="1420" y2="410" class="link-agg-isl" />
+  <line x1="1320" y1="420" x2="1420" y2="420" class="link-agg-isl" />
+  <rect x="1345" y="405" width="50" height="20" rx="3" fill="#0f172a" stroke="#ec4899" stroke-width="1"/>
+  <text x="1370" y="419" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#f472b6" text-anchor="middle">ISL Peer</text>
+
+  <!-- agg-7 -->
+  <g transform="translate(1272, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="1296" y="460" class="node-name">agg-7</text>
+  <text x="1296" y="474" class="node-ip">10.0.0.17</text>
+
+  <!-- agg-8 -->
+  <g transform="translate(1420, 396)">
+    <g class="node-icon router">
+<rect width="48" height="48" rx="8" fill="#0284c7" />
+<path d="M28.7,7.9V19.2h11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M36.5,15.4l3,3c0.5,0.5,0.5,1.2,0,1.7l-3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8,19.1h11.4v-11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.5,11.3l3-3c0.5-0.5,1.2-0.5,1.7,0l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M19.2,40.1V28.8H8" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.4,32.6l-3,3c-0.5,0.5-0.5,1.2,0,1.7l3,3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40,28.8H28.6v11.2" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M32.5,36.6l-3,3c-0.5,0.5-1.2,0.5-1.7,0l-3-3" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  </g>
+  <text x="1444" y="460" class="node-name">agg-8</text>
+  <text x="1444" y="474" class="node-ip">10.0.0.18</text>
+
+  <!-- Pair 4 Hosts -->
+  <line x1="1296" y1="444" x2="1220" y2="540" class="link-host-single" />
+  <g transform="translate(1199, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1220" y="598" class="node-name">h1-v401</text>
+  <text x="1220" y="614" class="host-ip">10.4.1.11</text>
+
+  <line x1="1296" y1="444" x2="1340" y2="540" class="link-host-bond" />
+  <line x1="1444" y1="444" x2="1340" y2="540" class="link-host-bond" />
+  <g transform="translate(1319, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1340" y="598" class="node-name">hm-v401</text>
+  <text x="1340" y="614" class="host-ip">10.4.1.10</text>
+  <rect x="1305" y="622" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="1340" y="634" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-7)</text>
+
+  <line x1="1444" y1="444" x2="1460" y2="540" class="link-host-single" />
+  <g transform="translate(1439, 540)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1460" y="598" class="node-name">h2-v401</text>
+  <text x="1460" y="614" class="host-ip">10.4.1.12</text>
+
+  <line x1="1296" y1="444" x2="1220" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(1199, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1220" y="748" class="node-name">h1-v402</text>
+  <text x="1220" y="764" class="host-ip">10.4.2.11</text>
+
+  <line x1="1296" y1="444" x2="1340" y2="690" class="link-host-bond" />
+  <line x1="1444" y1="444" x2="1340" y2="690" class="link-host-bond" />
+  <g transform="translate(1319, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1340" y="748" class="node-name">hm-v402</text>
+  <text x="1340" y="764" class="host-ip">10.4.2.10</text>
+  <rect x="1305" y="772" width="70" height="16" rx="3" fill="#14532d" stroke="#22c55e" stroke-width="1"/>
+  <text x="1340" y="784" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#86efac" text-anchor="middle">LACP (ESI-8)</text>
+
+  <line x1="1444" y1="444" x2="1460" y2="690" class="link-host-single" stroke-dasharray="3,3" />
+  <g transform="translate(1439, 690)">
+    <g class="node-icon client">
+<rect width="42" height="42" rx="8" fill="#3b82f6" />
+<path d="M10,12h22v16h-22z" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="7" y1="31" x2="35" y2="31" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="21" cy="20" r="3" fill="#FFFFFF"/>
+</g>
+  </g>
+  <text x="1460" y="748" class="node-name">h2-v402</text>
+  <text x="1460" y="764" class="host-ip">10.4.2.12</text>
+
+
+  <!-- ========================================================================= -->
+  <!-- LEGEND & ARCHITECTURAL HIGHLIGHTS -->
+  <!-- ========================================================================= -->
+  <rect x="60" y="865" width="1480" height="75" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1" />
+  
+  <!-- Legend items -->
+  <line x1="90" y1="895" x2="130" y2="895" class="link-core-isl" />
+  <text x="140" y="899" class="legend-text">Core ISL (Dual OSPF + iBGP RR)</text>
+
+  <line x1="420" y1="895" x2="460" y2="895" class="link-agg-isl" />
+  <text x="470" y="899" class="legend-text">Building ISL (Dual 25G OSPF + Local iBGP /32 Host Peering)</text>
+
+  <line x1="880" y1="895" x2="920" y2="895" class="link-uplink" />
+  <text x="930" y="899" class="legend-text">Core Uplinks (Dual-Fiber Home-Run)</text>
+
+  <line x1="1200" y1="895" x2="1240" y2="895" class="link-host-bond" />
+  <text x="1250" y="899" class="legend-text">All-Active LACP Multihoming (ESI)</text>
+
+  <text x="800" y="926" class="note-text">State Reduction Design: /24 Type-5 advertised to Cores • /32 Host Routes isolated across ISL • Shared Anycast VTEP per Building Pair</text>
+
+</svg>

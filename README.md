@@ -6,7 +6,7 @@ A high-performance, scalable Campus EVPN-VXLAN network architecture deployed on 
 
 ## 1. Architectural Overview & Campus Cabling Model
 
-[![Campus EVPN-VXLAN Architecture](images/campus-architecture.svg)](images/campus-architecture.svg)
+[![Campus EVPN-VXLAN Architecture](images/campus-architecture.svg)](https://raw.githubusercontent.com/andywhitaker/campus-evpn-anycast-mh/main/images/campus-architecture.svg)
 
 ### 1.1 The Campus Cabling Reality vs. Data Center Fabrics
 Data center network architectures typically rely on full-mesh Clos leaf-spine topologies where every leaf switch maintains homerun fiber connections to every spine switch. 
@@ -64,7 +64,7 @@ Direct point-to-point iBGP EVPN sessions are established across the Inter-Switch
 
 ## 3. Anycast Multihoming vs. Standard ESI Multihoming
 
-[![Anycast Multihoming vs Standard ESI Multihoming](images/anycast-multihoming.svg)](images/anycast-multihoming.svg)
+[![Anycast Multihoming vs Standard ESI Multihoming](images/anycast-multihoming.svg)](https://raw.githubusercontent.com/andywhitaker/campus-evpn-anycast-mh/main/images/anycast-multihoming.svg)
 
 ### 3.1 Traditional ESI Multihoming (RFC 7432)
 In standard ESI multihoming:

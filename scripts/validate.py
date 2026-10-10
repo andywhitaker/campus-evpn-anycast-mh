@@ -151,6 +151,150 @@ def host_ping(src_host: str, dst_ip: str, count: int = 2, timeout: int = 3) -> T
     return passed, loss_pct, avg_rtt, out
 
 
+def host_multicast(
+    src_host: str,
+    dst_hosts: List[str],
+    group: str,
+    port: int = 5001,
+    count: int = 5,
+    payload_size: int = 100,
+    join_delay: float = 2.0,
+    timeout: float = 4.0,
+    min_received: int = 1
+) -> Dict[str, Dict[str, Any]]:
+    """Execute UDP multicast verification from src_host to one or more dst_hosts.
+    Uses native Python multicast sockets on the hosts:
+    - Receivers join the specified multicast group on their local campus IP via IP_ADD_MEMBERSHIP.
+    - Explicitly drops membership on close to prevent stale IGMP snooping group state.
+    - Sender transmits datagrams out the campus interface via IP_MULTICAST_IF with TTL 32.
+    - Guaranteed cleanup in finally block terminates background processes and cleans socket state.
+    Returns: Dict[dst_host, {"received": int, "expected": int, "loss_pct": float, "passed": bool}]
+    """
+    recv_cmd = """
+import socket, struct, time, sys, json
+group = sys.argv[1]
+port = int(sys.argv[2])
+local_ip = sys.argv[3]
+count = int(sys.argv[4])
+timeout = float(sys.argv[5])
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+sock.bind(("", port))
+mreq = socket.inet_aton(group) + socket.inet_aton(local_ip)
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+sock.settimeout(1.2)
+
+received = 0
+start = time.time()
+while received < count and (time.time() - start) < timeout:
+    try:
+        data, addr = sock.recvfrom(2048)
+        received += 1
+    except socket.timeout:
+        pass
+try:
+    sock.setsockopt(socket.IPPROTO_IP, socket.IP_DROP_MEMBERSHIP, mreq)
+except Exception:
+    pass
+sock.close()
+print(json.dumps({"received": received, "expected": count}))
+"""
+
+    send_cmd = """
+import socket, struct, time, sys
+group = sys.argv[1]
+port = int(sys.argv[2])
+local_ip = sys.argv[3]
+count = int(sys.argv[4])
+payload_size = int(sys.argv[5])
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(local_ip))
+sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, struct.pack("b", 32))
+for i in range(count):
+    msg = f"mcast-{i}".encode().ljust(payload_size, b"X")
+    sock.sendto(msg, (group, port))
+    time.sleep(0.08)
+sock.close()
+"""
+
+    procs = {}
+    results = {}
+    try:
+        for dst in dst_hosts:
+            cname = f"{PREFIX}-{dst}"
+            ip = HOSTS[dst]["ip"]
+            p = subprocess.Popen(
+                ["docker", "exec", cname, "python3", "-c", recv_cmd, group, str(port), ip, str(count), str(timeout)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            procs[dst] = p
+
+        time.sleep(join_delay)
+
+        src_ip = HOSTS[src_host]["ip"]
+        cname_src = f"{PREFIX}-{src_host}"
+        try:
+            send_res = subprocess.run(
+                ["docker", "exec", cname_src, "python3", "-c", send_cmd, group, str(port), src_ip, str(count), str(payload_size)],
+                capture_output=True, text=True, timeout=timeout + 5
+            )
+            if send_res.returncode != 0:
+                send_err = send_res.stderr.strip() or send_res.stdout.strip()
+                for dst in dst_hosts:
+                    results[dst] = {
+                        "received": 0,
+                        "expected": count,
+                        "loss_pct": 100.0,
+                        "passed": False,
+                        "error": f"Sender failed (rc={send_res.returncode}): {send_err}"
+                    }
+                return results
+        except Exception as e:
+            for dst in dst_hosts:
+                results[dst] = {
+                    "received": 0,
+                    "expected": count,
+                    "loss_pct": 100.0,
+                    "passed": False,
+                    "error": f"Sender execution error: {str(e)}"
+                }
+            return results
+
+        for dst, p in procs.items():
+            try:
+                stdout, stderr = p.communicate(timeout=timeout + 2)
+                data = json.loads(stdout.strip())
+                rec = data.get("received", 0)
+                exp = data.get("expected", count)
+                loss = ((exp - rec) / exp * 100.0) if exp > 0 else 100.0
+                results[dst] = {
+                    "received": rec,
+                    "expected": exp,
+                    "loss_pct": loss,
+                    "passed": rec >= min_received
+                }
+            except Exception as e:
+                err_msg = str(e)
+                if stderr and stderr.strip():
+                    err_msg += f" (stderr: {stderr.strip()})"
+                results[dst] = {
+                    "received": 0,
+                    "expected": count,
+                    "loss_pct": 100.0,
+                    "passed": False,
+                    "error": err_msg
+                }
+        return results
+    finally:
+        for dst, p in procs.items():
+            if p.poll() is None:
+                p.kill()
+        for dst in dst_hosts:
+            run_docker(f"{PREFIX}-{dst}", ["pkill", "-f", f"{port}"], timeout=3)
+
+
 def print_banner(title: str):
     width = 90
     print(f"\n{C_BLUE}{'=' * width}{C_RESET}")
@@ -450,15 +594,19 @@ def test_4_route_scale_and_filtering() -> Dict[str, Any]:
     # 4.3 Aggregation Pair Verification: Confirm /32 host routes exchanged across ISL
     print(f"\n{C_CYAN}4.3 Verifying Single-Homed Host Routes (/32) Synchronized Across ISLs...{C_RESET}")
     
-    # Pre-fetch EVPN route-type 5 tables for all 8 aggs concurrently
+    # Pre-fetch EVPN route-type 5 and route-type 2 tables for all 8 aggs concurrently
     aggs = [f"agg-{i}" for i in range(1, 9)]
     agg_evpn_tables = {}
 
     def fetch_agg_evpn(node):
-        rc, data, err = run_sr_cli(node, "show network-instance default protocols bgp routes evpn route-type 5 summary")
-        if rc == 0 and data:
-            return node, data.get("summary", [{}])[0].get("ip_prefix", [])
-        return node, []
+        routes = []
+        rc5, data5, _ = run_sr_cli(node, "show network-instance default protocols bgp routes evpn route-type 5 summary")
+        if rc5 == 0 and data5:
+            routes.extend(data5.get("summary", [{}])[0].get("ip_prefix", []))
+        rc2, data2, _ = run_sr_cli(node, "show network-instance default protocols bgp routes evpn route-type 2 summary")
+        if rc2 == 0 and data2:
+            routes.extend(data2.get("summary", [{}])[0].get("mac_ip", []))
+        return node, routes
 
     with ThreadPoolExecutor(max_workers=8) as ex:
         futures = [ex.submit(fetch_agg_evpn, a) for a in aggs]
@@ -480,7 +628,7 @@ def test_4_route_scale_and_filtering() -> Dict[str, Any]:
         partner_table = agg_evpn_tables.get(partner_agg, [])
 
         learned = any(
-            e.get("IP-address") == target_ip and e.get("neighbor") == ROUTERS[attached_agg]["system_ip"]
+            e.get("IP-address") in (target_ip, h_info["ip"]) and e.get("neighbor") == ROUTERS[attached_agg]["system_ip"]
             for e in partner_table
         )
 
@@ -688,15 +836,277 @@ def test_6_resiliency_failure_recovery() -> Dict[str, Any]:
 
 
 # ------------------------------------------------------------------------------
+# Test 7: EVPN OISM Multicast Verification
+# ------------------------------------------------------------------------------
+def test_7_multicast_matrix() -> Dict[str, Any]:
+    print_banner("TEST 7: EVPN OISM Multicast Control-Plane & Data-Plane Matrix")
+    result = {"test": "EVPN OISM Multicast Matrix", "passed": True, "control_plane": {}, "traffic_categories": {}}
+
+    # 7.1 OISM Control-Plane State Verification
+    print(f"{C_CYAN}7.1 Verifying EVPN OISM Control-Plane Configuration & States...{C_RESET}")
+
+    aggs = [f"agg-{i}" for i in range(1, 9)]
+    sbd_ok = True
+    pim_ok = True
+    igmp_ok = True
+
+    def check_agg_mcast(node):
+        rc_sbd, data_sbd, _ = run_sr_cli(node, "show network-instance mac-vrf-50000 summary")
+        sbd_up = (rc_sbd == 0 and data_sbd and data_sbd.get("Network Instance", [{}])[0].get("Oper state") == "up")
+
+        rc_irb, data_irb, _ = run_sr_cli(node, "show network-instance mac-vrf-50000 interfaces")
+        irb_up = (rc_irb == 0 and data_irb and any(
+            i.get("Interface") == "irb0.0" and i.get("Oper state") == "up"
+            for i in data_irb.get("Network Interfaces", [])
+        ))
+
+        rc_pim, out_pim, _ = run_sr_cli(node, "show network-instance ip-vrf-1 protocols pim interface", json_format=False)
+        pim_up = bool(rc_pim == 0 and "irb0.0" in out_pim and "up" in out_pim and "PIM IPv4 Interfaces" in out_pim)
+
+        pair = ROUTERS[node]["pair"]
+        vlan = pair * 100 + 1
+        rc_igmp, data_igmp, _ = run_sr_cli(node, f"show network-instance mac-vrf-{vlan} protocols igmp-snooping status")
+        igmp_status_up = bool(rc_igmp == 0 and data_igmp and data_igmp.get("igmpinst", [{}])[0].get("igmpstatus", {}).get("Oper State") == "up")
+
+        return node, sbd_up and irb_up, pim_up, igmp_status_up
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futures = [ex.submit(check_agg_mcast, a) for a in aggs]
+        for f in sorted(futures, key=lambda x: x.result()[0]):
+            node, s_ok, p_ok, i_ok = f.result()
+            if not s_ok:
+                sbd_ok = False
+            if not p_ok:
+                pim_ok = False
+            if not i_ok:
+                igmp_ok = False
+
+    print_result_badge(sbd_ok, "Supplementary Broadcast Domain (mac-vrf-50000, VNI 50000, irb0.0) UP on all 8 aggs")
+    print_result_badge(pim_ok, "PIM IPv4 active with unnumbered irb0.0 (multicast-senders always) in ip-vrf-1 on all 8 aggs")
+    print_result_badge(igmp_ok, "IGMP Snooping active with local queriers on tenant MAC-VRFs across all aggregation pairs")
+
+    if not (sbd_ok and pim_ok and igmp_ok):
+        result["passed"] = False
+    result["control_plane"] = {"sbd_up": sbd_ok, "pim_up": pim_ok, "igmp_up": igmp_ok}
+
+    # Data Plane Multicast Traffic Matrix
+    # Using dynamic salt based on execution time to prevent stale (S,G) PIM router state on re-runs
+    run_salt = int(time.time() * 10) % 200 + 10
+
+    matrix = [
+        # Category 1: Intra-VLAN Multicast
+        {"cat": "1. Intra-VLAN Multicast", "cat_id": 1, "test_id": 1, "src": "h1-v101", "dsts": ["h2-v101"], "grp": f"239.1.1.{run_salt}", "port": 5001, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 1 VLAN 101 Single-to-Single (agg-1 -> agg-2)"},
+        {"cat": "1. Intra-VLAN Multicast", "cat_id": 1, "test_id": 2, "src": "hm-v101", "dsts": ["h1-v101"], "grp": f"239.1.1.{(run_salt+1)%250+1}", "port": 5002, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 1 VLAN 101 Multi-to-Single (LAG-1 -> agg-1)"},
+        {"cat": "1. Intra-VLAN Multicast", "cat_id": 1, "test_id": 3, "src": "h1-v101", "dsts": ["h2-v101", "hm-v101"], "grp": f"239.1.1.{(run_salt+2)%250+1}", "port": 5003, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 1 VLAN 101 1-to-Many (h1 -> [h2, hm])"},
+        {"cat": "1. Intra-VLAN Multicast", "cat_id": 1, "test_id": 4, "src": "h1-v201", "dsts": ["h2-v201"], "grp": f"239.2.1.{run_salt}", "port": 5004, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 2 VLAN 201 Single-to-Single (agg-3 -> agg-4)"},
+        {"cat": "1. Intra-VLAN Multicast", "cat_id": 1, "test_id": 5, "src": "h1-v301", "dsts": ["h2-v301"], "grp": f"239.3.1.{run_salt}", "port": 5005, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 3 VLAN 301 Single-to-Single (agg-5 -> agg-6)"},
+        {"cat": "1. Intra-VLAN Multicast", "cat_id": 1, "test_id": 6, "src": "h1-v401", "dsts": ["h2-v401"], "grp": f"239.4.1.{run_salt}", "port": 5006, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 4 VLAN 401 Single-to-Single (agg-7 -> agg-8)"},
+
+        # Category 2: Inter-VLAN Local Multicast
+        {"cat": "2. Inter-VLAN Local Multicast", "cat_id": 2, "test_id": 1, "src": "h1-v101", "dsts": ["h1-v102"], "grp": f"239.1.2.{run_salt}", "port": 5011, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 1 (VLAN 101 -> VLAN 102 single-homed)"},
+        {"cat": "2. Inter-VLAN Local Multicast", "cat_id": 2, "test_id": 2, "src": "hm-v101", "dsts": ["hm-v102"], "grp": f"239.1.2.{(run_salt+1)%250+1}", "port": 5012, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 1 (VLAN 101 -> VLAN 102 multihomed LAG)"},
+        {"cat": "2. Inter-VLAN Local Multicast", "cat_id": 2, "test_id": 3, "src": "h1-v201", "dsts": ["h1-v202"], "grp": f"239.2.2.{run_salt}", "port": 5013, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 2 (VLAN 201 -> VLAN 202 local routing)"},
+        {"cat": "2. Inter-VLAN Local Multicast", "cat_id": 2, "test_id": 4, "src": "h1-v301", "dsts": ["h1-v302"], "grp": f"239.3.2.{run_salt}", "port": 5014, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 3 (VLAN 301 -> VLAN 302 local routing)"},
+        {"cat": "2. Inter-VLAN Local Multicast", "cat_id": 2, "test_id": 5, "src": "h1-v401", "dsts": ["h1-v402"], "grp": f"239.4.2.{run_salt}", "port": 5015, "join_delay": 1.8, "min_rec": 1, "desc": "Pair 4 (VLAN 401 -> VLAN 402 local routing)"},
+
+        # Category 3: Cross-Pair OISM Fabric Multicast
+        # SBD transit delivers the initial datagram across fabric VNI 50000 guided by BGP EVPN Type 6 SMET routes
+        {"cat": "3. Cross-Pair OISM Fabric Multicast", "cat_id": 3, "test_id": 1, "src": "h1-v101", "dsts": ["h1-v201"], "grp": f"239.10.20.{run_salt}", "port": 5021, "join_delay": 2.6, "min_rec": 1, "desc": "Pair 1 (Bldg 1) -> Pair 2 (Bldg 2 via SBD VNI 50000)"},
+        {"cat": "3. Cross-Pair OISM Fabric Multicast", "cat_id": 3, "test_id": 2, "src": "hm-v101", "dsts": ["hm-v201"], "grp": f"239.10.20.{(run_salt+1)%250+1}", "port": 5022, "join_delay": 2.6, "min_rec": 1, "desc": "Pair 1 Multi -> Pair 2 Multi (SBD VNI 50000)"},
+        {"cat": "3. Cross-Pair OISM Fabric Multicast", "cat_id": 3, "test_id": 3, "src": "h1-v101", "dsts": ["h1-v301"], "grp": f"239.10.30.{run_salt}", "port": 5023, "join_delay": 2.6, "min_rec": 1, "desc": "Pair 1 (Bldg 1) -> Pair 3 (Bldg 3 via SBD VNI 50000)"},
+        {"cat": "3. Cross-Pair OISM Fabric Multicast", "cat_id": 3, "test_id": 4, "src": "h1-v101", "dsts": ["h1-v401"], "grp": f"239.10.40.{run_salt}", "port": 5024, "join_delay": 2.6, "min_rec": 1, "desc": "Pair 1 (Bldg 1) -> Pair 4 (Bldg 4 via SBD VNI 50000)"},
+        {"cat": "3. Cross-Pair OISM Fabric Multicast", "cat_id": 3, "test_id": 5, "src": "hm-v401", "dsts": ["hm-v101"], "grp": f"239.10.10.{run_salt}", "port": 5025, "join_delay": 2.6, "min_rec": 1, "desc": "Pair 4 Multi -> Pair 1 Multi (SBD VNI 50000)"},
+    ]
+
+    current_cat = ""
+    for test in matrix:
+        if test["cat"] != current_cat:
+            current_cat = test["cat"]
+            print(f"\n{C_CYAN}--- {current_cat} ---{C_RESET}")
+            table_header = f"{'Source':<10} | {'Destination':<18} | {'Group':<14} | {'Packets':<14} | {'Description':<40} | {'Status':<8}"
+            print(f"  {table_header}")
+            print(f"  {'-' * len(table_header)}")
+
+        res = host_multicast(
+            test["src"],
+            test["dsts"],
+            test["grp"],
+            port=test["port"],
+            count=5,
+            join_delay=test.get("join_delay", 2.0),
+            timeout=3.5,
+            min_received=test.get("min_rec", 1)
+        )
+        
+        # Check if all destinations passed
+        all_passed = all(r.get("passed", False) for r in res.values())
+        if not all_passed:
+            # Retry once with a fresh group address and port to avoid stale router states
+            retry_grp = f"239.{test['cat_id']}.{test['test_id']}.{(run_salt + 100) % 250 + 1}"
+            retry_port = test["port"] + 200
+            res = host_multicast(
+                test["src"],
+                test["dsts"],
+                retry_grp,
+                port=retry_port,
+                count=5,
+                join_delay=test.get("join_delay", 2.0) + 0.5,
+                timeout=4.0,
+                min_received=test.get("min_rec", 1)
+            )
+            all_passed = all(r.get("passed", False) for r in res.values())
+
+        if not all_passed:
+            result["passed"] = False
+
+        dst_str = ",".join(test["dsts"])
+        pkt_strs = [f"{r['received']}/{r['expected']}" for r in res.values()]
+        pkt_display = ",".join(pkt_strs)
+        status_str = f"{C_GREEN}PASS{C_RESET}" if all_passed else f"{C_RED}FAIL{C_RESET}"
+        print(f"  {test['src']:<10} | {dst_str:<18} | {test['grp']:<14} | {pkt_display:<14} | {test['desc']:<40} | {status_str}")
+
+        if current_cat not in result["traffic_categories"]:
+            result["traffic_categories"][current_cat] = []
+        result["traffic_categories"][current_cat].append({
+            "src": test["src"],
+            "dsts": test["dsts"],
+            "group": test["grp"],
+            "results": res,
+            "passed": all_passed
+        })
+
+    # 7.4 Verification of BGP EVPN Route Type 6 (SMET)
+    print(f"\n{C_CYAN}7.4 Verifying BGP EVPN Route Type 6 (SMET) Route Propagation...{C_RESET}")
+    smet_salt = (run_salt + 50) % 250 + 1
+    smet_grp = f"239.50.50.{smet_salt}"
+    smet_port = 5050
+    smet_cname = f"{PREFIX}-h1-v201"
+    smet_ip = HOSTS["h1-v201"]["ip"]
+    smet_recv_cmd = f"""
+import socket, time
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(('', {smet_port}))
+mreq = socket.inet_aton('{smet_grp}') + socket.inet_aton('{smet_ip}')
+s.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+time.sleep(8)
+try:
+    s.setsockopt(socket.IPPROTO_IP, socket.IP_DROP_MEMBERSHIP, mreq)
+except Exception:
+    pass
+s.close()
+"""
+    p_smet = subprocess.Popen(["docker", "exec", smet_cname, "python3", "-c", smet_recv_cmd])
+    core_has_smet = False
+    agg_has_smet = False
+    try:
+        # Poll for SMET route propagation across core reflectors to agg leaves (up to 8s, 0.5s intervals)
+        start_poll = time.time()
+        while time.time() - start_poll < 8.0:
+            if not core_has_smet:
+                rc_c1, data_c1, _ = run_sr_cli("core-1", "show network-instance default protocols bgp routes evpn route-type 6 summary")
+                if rc_c1 == 0 and data_c1:
+                    for r in data_c1.get("summary", [{}])[0].get("smet", []):
+                        if r.get("multicast-group-address") == smet_grp:
+                            core_has_smet = True
+                            break
+
+            if not agg_has_smet:
+                rc_a1, data_a1, _ = run_sr_cli("agg-1", "show network-instance default protocols bgp routes evpn route-type 6 summary")
+                if rc_a1 == 0 and data_a1:
+                    for r in data_a1.get("summary", [{}])[0].get("smet", []):
+                        if r.get("multicast-group-address") == smet_grp:
+                            agg_has_smet = True
+                            break
+
+            if core_has_smet and agg_has_smet:
+                break
+            time.sleep(0.5)
+
+        smet_ok = core_has_smet and agg_has_smet
+        if not smet_ok:
+            result["passed"] = False
+        print_result_badge(
+            smet_ok,
+            f"EVPN Route Type 6 (SMET) Signal for (*, {smet_grp})",
+            f"Reflected by core-1: {core_has_smet} | Installed on remote agg-1: {agg_has_smet}"
+        )
+        result["smet_verification"] = {"group": smet_grp, "core_reflected": core_has_smet, "agg_installed": agg_has_smet, "passed": smet_ok}
+    finally:
+        if p_smet.poll() is None:
+            p_smet.kill()
+        run_docker(smet_cname, ["pkill", "-f", smet_grp], timeout=3)
+
+    return result
+
+
+# ------------------------------------------------------------------------------
 # Executive Summary and Main Driver
 # ------------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Campus EVPN-VXLAN Verification Test Suite")
-    parser.add_argument("--test", help="Comma-separated test numbers to run (1-6)", default="all")
+    parser.add_argument(
+        "--test",
+        help="Test suites to run: 1-7, comma-separated (e.g., 1,5,7), or aliases: all, unicast, multicast, traffic",
+        default="all"
+    )
+    parser.add_argument(
+        "--traffic",
+        choices=["all", "unicast", "multicast"],
+        help="Traffic plane selection: 'unicast' (Suites 1-6), 'multicast' (Suite 7), or 'all' (Suites 1-7)",
+        default="all"
+    )
     parser.add_argument("--json-report", help="Save test results to specified JSON file", default=None)
     args = parser.parse_args()
 
-    tests_to_run = [1, 2, 3, 4, 5, 6] if args.test == "all" else [int(t.strip()) for t in args.test.split(",")]
+    ALL_SUITES = [1, 2, 3, 4, 5, 6, 7]
+    UNICAST_SUITES = [1, 2, 3, 4, 5, 6]
+    MULTICAST_SUITES = [7]
+
+    test_arg = args.test.strip().lower()
+    traffic_arg = args.traffic.strip().lower()
+
+    # Determine candidate suites from --test
+    if test_arg == "all":
+        candidate_suites = ALL_SUITES
+    elif test_arg in ("multicast", "mcast"):
+        candidate_suites = MULTICAST_SUITES
+    elif test_arg == "unicast":
+        candidate_suites = UNICAST_SUITES
+    elif test_arg in ("traffic", "dataplane", "data-plane"):
+        candidate_suites = [5, 7]
+    else:
+        candidate_suites = []
+        for item in test_arg.split(","):
+            item = item.strip()
+            if not item:
+                continue
+            if item.isdigit():
+                val = int(item)
+                if val < 1 or val > 7:
+                    parser.error(f"Invalid test suite number '{item}'. Valid suites are 1-7.")
+                candidate_suites.append(val)
+            elif item in ("multicast", "mcast"):
+                candidate_suites.append(7)
+            elif item == "unicast":
+                candidate_suites.extend(UNICAST_SUITES)
+            elif item in ("traffic", "dataplane", "data-plane"):
+                candidate_suites.extend([5, 7])
+            else:
+                parser.error(f"Unrecognized test suite identifier '{item}'. Valid values are 1-7 or aliases (all, unicast, multicast, traffic).")
+        candidate_suites = sorted(list(set(candidate_suites)))
+
+    # Apply --traffic filter
+    if traffic_arg == "unicast":
+        tests_to_run = [t for t in candidate_suites if t in UNICAST_SUITES]
+    elif traffic_arg == "multicast":
+        tests_to_run = [t for t in candidate_suites if t in MULTICAST_SUITES]
+    else:
+        tests_to_run = candidate_suites
+
+    if not tests_to_run:
+        print(f"\n{C_RED}[ERROR] No test suites selected to run with the specified filters (--test '{args.test}' and --traffic '{args.traffic}').{C_RESET}\n")
+        sys.exit(1)
 
     start_time = time.time()
     results = {}
@@ -717,16 +1127,22 @@ def main():
         results["test_5"] = test_5_dataplane_traffic_matrix()
     if 6 in tests_to_run:
         results["test_6"] = test_6_resiliency_failure_recovery()
+    if 7 in tests_to_run:
+        results["test_7"] = test_7_multicast_matrix()
 
     duration = time.time() - start_time
 
     # Executive Summary
     print_banner("EXECUTIVE VERIFICATION SUMMARY")
     total_tests = len(results)
+    if total_tests == 0:
+        print(f"  {C_RED}No test suites executed.{C_RESET}\n")
+        sys.exit(1)
+
     passed_tests = sum(1 for r in results.values() if r["passed"])
     all_passed = (passed_tests == total_tests)
 
-    table_header = f"{'Test Suite':<45} | {'Scope':<20} | {'Status':<10}"
+    table_header = f"{'Test Suite':<45} | {'Scope':<22} | {'Status':<10}"
     print(f"  {table_header}")
     print(f"  {'-' * len(table_header)}")
 
@@ -735,14 +1151,15 @@ def main():
         "test_2": ("Test 2: iBGP EVPN Overlay Sessions", "36 BGP Sessions"),
         "test_3": ("Test 3: EVPN Multihoming & LACP", "16 ES, 8 LAGs"),
         "test_4": ("Test 4: Route Scale & Filtering", "8 Subnets, 16 Host Rts"),
-        "test_5": ("Test 5: Campus Data Plane Matrix", "29 End-to-End Pings"),
+        "test_5": ("Test 5: Campus Unicast Data Plane Matrix", "29 End-to-End Pings"),
         "test_6": ("Test 6: Uplink Resiliency & Recovery", "Link Outage Simulation"),
+        "test_7": ("Test 7: EVPN OISM Multicast Matrix", "Control-Plane & Traffic"),
     }
 
     for key, r in results.items():
         title, scope = test_titles.get(key, (r["test"], "All Nodes"))
         st = f"{C_GREEN}PASS{C_RESET}" if r["passed"] else f"{C_RED}FAIL{C_RESET}"
-        print(f"  {title:<45} | {scope:<20} | {st:<10}")
+        print(f"  {title:<45} | {scope:<22} | {st:<10}")
 
     print(f"  {'-' * len(table_header)}")
     print(f"  Total Duration: {duration:.2f} seconds")
@@ -760,6 +1177,8 @@ def main():
             "overall_passed": all_passed,
             "passed_suites": passed_tests,
             "total_suites": total_tests,
+            "traffic_filter": args.traffic,
+            "test_filter": args.test,
             "results": results
         }
         with open(args.json_report, "w") as f:

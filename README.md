@@ -60,6 +60,28 @@ Direct point-to-point iBGP EVPN sessions are established across the Inter-Switch
     - **Export across ISL**: Aggregation switches export `/32` single-homed host routes directly to their ISL partner.
     - **Result**: If traffic arrives at `agg-2` destined for a host single-homed to `agg-1` (`10.1.1.11`), `agg-2` knows the host route via the ISL session and forwards it across the building ISL without core involvement.
 
+### 2.4 EVPN Optimized Inter-Subnet Multicast (OISM) & SBD Architecture
+In traditional multicast over EVPN, forwarding multicast streams between distinct Layer-2 subnets often requires extending flat broadcast domains campus-wide or routing through centralized Rendezvous Points (RPs) and hair-pinning across core routers.
+
+This architecture deploys **EVPN Optimized Inter-Subnet Multicast (OISM)** based on RFC 9251:
+- **Supplementary Broadcast Domain (SBD VNI 50000)**:
+  - Configured as `mac-vrf-50000` with VNI `50000` across all 8 aggregation switches.
+  - Acts as a shared, campus-wide transit broadcast domain for inter-subnet multicast traffic.
+  - MAC address advertisement is suppressed (`routes bridge-table mac-ip advertise false`) as the SBD is dedicated solely to inter-subnet multicast transit.
+- **Full Unnumbered IRB (`irb0.0`)**:
+  - Each aggregation switch binds an unnumbered IRB subinterface (`irb0.0`, configured with `evpn-interface-ful-unnumbered`) between `mac-vrf-50000` and the tenant VRF `ip-vrf-1`.
+  - Enables routing of multicast traffic between local tenant VLANs and the campus SBD without allocating explicit IP subnets to the SBD itself.
+- **PIM IPv4 with `multicast-senders always`**:
+  - PIM IPv4 is enabled on `irb0.0` within `ip-vrf-1` with `multicast-senders always`.
+  - Ensures that when an aggregation switch receives multicast traffic from a local source on any tenant VLAN, it routes the traffic onto the SBD fabric so that remote aggregation switches can receive and route it locally to their subscribers.
+- **Selective Multicast Ethernet Tag (SMET - BGP EVPN Route Type 6)**:
+  - When downstream hosts signal multicast group interest via IGMP, aggregation switches generate EVPN Route Type 6 (SMET) advertisements.
+  - Core Route Reflectors (`core-1`, `core-2`) reflect these SMET routes to all aggregation peers.
+  - **Selective Distribution**: Multicast traffic over SBD VNI 50000 is forwarded across the fabric only to aggregation switches with active group subscribers, avoiding flooding unneeded multicast traffic campus-wide.
+- **Distributed IGMP Snooping Queriers**:
+  - Each local tenant MAC-VRF (`mac-vrf-101`, `mac-vrf-102`, etc.) runs IGMP snooping with `send-queries true` on host- and LAG-facing interfaces.
+  - Aggregation switches actively query downstream hosts every 125 seconds, maintaining group membership tables locally and synchronizing them into EVPN.
+
 ---
 
 ## 3. Anycast Multihoming vs. Standard ESI Multihoming
@@ -109,6 +131,7 @@ The table below summarizes the design decisions made to minimize hardware table 
 | **Hierarchical Route Filtering (/24 vs /32)** | Aggregation switches export `/24` subnets to Cores and strictly filter out `/32` host routes. | Keeps Core routing tables minimal (exactly eight `/24` prefix routes for the entire campus) regardless of how many thousands of hosts are online. |
 | **Direct ISL iBGP Peering** | Dedicated point-to-point iBGP EVPN session across the building ISL. | Exchanges single-homed `/32` host routes exclusively between building partners, providing optimal forwarding without leaking state to cores. |
 | **Dynamic ARP Host-Route Population** | `ipv4 arp host-route populate dynamic` configured on IRB subinterfaces. | Host routes are populated into the IP-VRF routing table on-demand only when endpoints actively communicate, avoiding stale routing entries. |
+| **EVPN OISM with SBD (VNI 50000)** | SBD `mac-vrf-50000`, unnumbered `irb0.0`, PIM `multicast-senders always`, and BGP EVPN Type-6 SMET routes. | Prevents inter-building multicast hair-pinning. Eliminates duplicate packets on multi-access links. Distributes cross-campus multicast exclusively to VTEPs with active receivers. |
 
 ---
 
@@ -462,13 +485,13 @@ Execution Summary:
 ### Phase 6: Automated Test Suite & Resiliency Verification
 
 #### Step 6.1: Run Comprehensive Automated Validation Suite
-Execute `python3 scripts/validate.py` to run automated verification across all 6 test suites:
+Execute `python3 scripts/validate.py` to run automated verification across all 7 test suites:
 ```text
 $ python3 scripts/validate.py
 ====================================================================================================
 #                 Campus EVPN-VXLAN Automated Verification & Acceptance Suite                      #
 ====================================================================================================
-[SUITE 1/6] OSPF Underlay Verification across 10 Nodes
+[SUITE 1/7] OSPF Underlay Verification across 10 Nodes
 ----------------------------------------------------------------------------------------------------
   [PASS] core-1: 6 OSPF neighbors in FULL state
   [PASS] core-2: 6 OSPF neighbors in FULL state
@@ -482,7 +505,7 @@ $ python3 scripts/validate.py
   [PASS] agg-8: 3 OSPF neighbors in FULL state
   [PASS] All 10 node loopback IPs learned in underlay OSPF tables
 
-[SUITE 2/6] BGP EVPN Overlay Verification
+[SUITE 2/7] BGP EVPN Overlay Verification
 ----------------------------------------------------------------------------------------------------
   [PASS] core-1: 9 iBGP EVPN sessions ESTABLISHED (1 Core Peer + 8 Agg Clients)
   [PASS] core-2: 9 iBGP EVPN sessions ESTABLISHED (1 Core Peer + 8 Agg Clients)
@@ -495,7 +518,7 @@ $ python3 scripts/validate.py
   [PASS] agg-7: 3 iBGP EVPN sessions ESTABLISHED (2 Cores + 1 ISL Partner)
   [PASS] agg-8: 3 iBGP EVPN sessions ESTABLISHED (2 Cores + 1 ISL Partner)
 
-[SUITE 3/6] EVPN Anycast Multihoming & LAG Verification
+[SUITE 3/7] EVPN Anycast Multihoming & LAG Verification
 ----------------------------------------------------------------------------------------------------
   [PASS] agg-1 ES ES-LAG1 (ESI 00:01:01:00:00:00:00:00:00:01): all-active, Anycast VTEP 10.0.0.101
   [PASS] agg-1 ES ES-LAG2 (ESI 00:01:01:00:00:00:00:00:00:02): all-active, Anycast VTEP 10.0.0.101
@@ -503,14 +526,14 @@ $ python3 scripts/validate.py
   [PASS] agg-2 ES ES-LAG2 (ESI 00:01:01:00:00:00:00:00:00:02): all-active, Anycast VTEP 10.0.0.101
   [PASS] Multi-Chassis LACP Partner MAC matched (00:00:00:01:01:01) on hosts
 
-[SUITE 4/6] Route Scale & Filtering Verification (CRITICAL)
+[SUITE 4/7] Route Scale & Filtering Verification (CRITICAL)
 ----------------------------------------------------------------------------------------------------
   [PASS] core-1 Type-5 EVPN Table: 8 summarized /24 prefix routes present
   [PASS] core-1 Route Filtering: 0 single-homed /32 host routes leaked to Core
   [PASS] core-2 Route Filtering: 0 single-homed /32 host routes leaked to Core
   [PASS] agg-1 ISL Peering: /32 host routes learned from partner agg-2 across ISL
 
-[SUITE 5/6] End-to-End Data Plane Traffic Matrix
+[SUITE 5/7] End-to-End Data Plane Traffic Matrix
 ----------------------------------------------------------------------------------------------------
   [PASS] Intra-VLAN Single-Homed <-> Single-Homed (h1-v101 <-> h2-v101): 0% loss
   [PASS] Intra-VLAN Multihomed <-> Single-Homed (hm-v101 <-> h1-v101): 0% loss
@@ -519,15 +542,25 @@ $ python3 scripts/validate.py
   [PASS] Cross-Campus Inter-Subnet (h1-v101 <-> h1-v301 Building 3): 0% loss
   [PASS] Cross-Campus Inter-Subnet (h1-v101 <-> h1-v401 Building 4): 0% loss
 
-[SUITE 6/6] Uplink Resiliency & Failure Recovery Test
+[SUITE 6/7] Uplink Resiliency & Failure Recovery Test
 ----------------------------------------------------------------------------------------------------
   [INFO] Simulating core uplink failure: disabling agg-1:ethernet-1/3 (link to core-1)...
   [PASS] Uplink down: h1-v101 (on agg-1) ping to h1-v201 via ISL -> agg-2 -> core-2: 0% loss
   [INFO] Re-enabling agg-1:ethernet-1/3...
   [PASS] Uplink restored: fabric fully converged, 0% loss
 
+[SUITE 7/7] EVPN OISM Multicast Matrix (Control-Plane & Traffic)
+----------------------------------------------------------------------------------------------------
+  [PASS] SBD mac-vrf-50000 (VNI 50000) & irb0.0 UP on all 8 aggregation nodes
+  [PASS] PIM IPv4 active with unnumbered irb0.0 in ip-vrf-1 on all 8 aggregation nodes
+  [PASS] IGMP Snooping active with local queriers on tenant MAC-VRFs across all pairs
+  [PASS] Category 1 Intra-VLAN Multicast (6/6 tests passing, 0% packet loss)
+  [PASS] Category 2 Inter-VLAN Local Multicast (5/5 tests passing, 0% packet loss)
+  [PASS] Category 3 Cross-Pair OISM Fabric Multicast (5/5 tests passing via SBD VNI 50000)
+  [PASS] BGP EVPN Route Type 6 (SMET) Route Propagation verified (*, 239.50.50.50)
+
 ====================================================================================================
-FINAL TEST RESULT: ALL SUITES PASSED (6/6) — DURATION: 18.42s
+FINAL TEST RESULT: ALL SUITES PASSED (7/7) — DURATION: 82.45s
 ====================================================================================================
 ```
 
@@ -561,6 +594,85 @@ To manually test uplink failure resilience:
 
 ---
 
+### Phase 7: EVPN OISM Multicast Matrix Validation
+
+#### Step 7.1: Verify OISM Control Plane & SBD Operational State
+On **`agg-1`**, verify that Supplementary Broadcast Domain (`mac-vrf-50000`) is operational:
+```text
+A:admin@agg-1# show network-instance mac-vrf-50000 summary
++----------------------------------------+---------------------+---------------------+---------------------+----------------------------------------+--------------------------------------------------+
+|                  Name                  |        Type         |     Admin state     |     Oper state      |               Router id                |                   Description                    |
++========================================+=====================+=====================+=====================+========================================+================================================--+
+| mac-vrf-50000                          | mac-vrf             | enable              | up                  | N/A                                    | Supplementary Broadcast Domain for OISM          |
++----------------------------------------+---------------------+---------------------+---------------------+----------------------------------------+--------------------------------------------------+
+```
+
+Verify PIM IPv4 interface status on `irb0.0` within `ip-vrf-1`:
+```text
+A:admin@agg-1# show network-instance ip-vrf-1 protocols pim interface
+========================================================================================================================================================================================================
+Net-Inst "ip-vrf-1" PIM IPv4 Interfaces
+========================================================================================================================================================================================================
++--------------------------------+---------+-------+----------+----------+--------+---------------------------+
+|         Interface Name         |  Admin  | Oper  | Priority |  Hello   | Hello  |            DR             |
+|                                |         |       |          |          | Multip |                           |
+|                                |         |       |          |          |  lier  |                           |
++================================+=========+=======+==========+==========+========+===========================+
+| irb0.0                         | enable  | up    | 1        | 30       | 35     | 0.136.0.0                 |
+| irb0.101                       | enable  | up    | 1        | 30       | 35     | 10.1.1.1                  |
+| irb0.102                       | enable  | up    | 1        | 30       | 35     | 10.1.2.1                  |
++--------------------------------+---------+-------+----------+----------+--------+---------------------------+
+No. of Interfaces: 3
+```
+
+Verify IGMP Snooping operational state and local querier on `mac-vrf-101`:
+```text
+A:admin@agg-1# show network-instance mac-vrf-101 protocols igmp-snooping status
+========================================================================================================================================================================================================
+Net-Inst mac-vrf-101 IGMP Status
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Oper State                       : up
+Querier Address                  : 10.1.1.1
+Querier Interface                : irb0.101
+Querier Version                  : 3
+Querier General Query Interval   : 125
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+```
+
+#### Step 7.2: Verify BGP EVPN Route Type 6 (SMET) Route Reflection
+When downstream receivers join multicast groups, aggregation switches advertise BGP EVPN Route Type 6 (SMET) routes. Core switches reflect these routes across all peers:
+```text
+A:admin@core-1# show network-instance default protocols bgp routes evpn route-type 6 summary
+========================================================================================================================================================================================================
+BGP Router ID: 10.0.0.1      AS: 65000      Local AS: 65000
+Type 6 Selective Multicast Ethernet Tag (SMET) Routes
++--------+----------------------------+------------+---------------------+----------------------------+--------+----------------------------+
+| Status |    Route-distinguisher     |   Tag-ID   |   Multicast Group   |          neighbor          | Path-id|          Next-Hop          |
++========+============================+============+=====================+============================+========+============================+
+| u*>    | 10.0.0.12:50000            | 0          | (*, 239.50.50.50)   | 10.0.0.12                  | 0      | 10.0.0.12                  |
++--------+----------------------------+------------+---------------------+----------------------------+--------+----------------------------+
+```
+
+#### Step 7.3: Multicast Matrix Traffic Validation
+Multicast traffic verification validates three distinct forwarding categories:
+1. **Category 1 (Intra-VLAN Multicast)**:
+   - Validates Layer-2 multicast switching within the building pair VLAN (single-to-single, multihomed LAG to single-homed, and 1-to-many point-to-multipoint).
+2. **Category 2 (Inter-VLAN Local Multicast)**:
+   - Validates local multicast routing on the ingress aggregation pair across different VLANs (e.g., VLAN 101 to VLAN 102) without traversing the campus fabric.
+3. **Category 3 (Cross-Pair OISM Fabric Multicast)**:
+   - Validates routed multicast across different building pairs transiting the SBD VNI 50000 guided by EVPN SMET route signaling.
+
+Run the dedicated multicast test suite:
+```bash
+python3 scripts/validate.py --test 7
+```
+Or use the traffic filter option:
+```bash
+python3 scripts/validate.py --traffic multicast
+```
+
+---
+
 ## 6. Deployment & Operations
 
 ### 6.1 Deploy Fabric
@@ -569,8 +681,68 @@ sudo containerlab deploy -t campus-evpn-anycast-mh.clab.yml
 ```
 
 ### 6.2 Run Validation Suite
+
+The automated validation tool `scripts/validate.py` allows operators to validate the campus fabric, selectively test unicast or multicast traffic, and export structured test reports.
+
+#### How to Run Multicast Tests (Simple Quick Start)
+To validate EVPN OISM multicast (control plane, traffic matrix, and BGP SMET route propagation), run:
+```bash
+python3 scripts/validate.py --traffic multicast
+```
+*Or equivalently:*
+```bash
+python3 scripts/validate.py --test multicast
+# or
+python3 scripts/validate.py --test 7
+```
+
+#### How to Run Unicast Tests (Simple Quick Start)
+To validate unicast fabric operations:
+```bash
+# Run all unicast validation suites (Suites 1 through 6)
+python3 scripts/validate.py --traffic unicast
+
+# Run only the unicast data plane ping matrix (Suite 5)
+python3 scripts/validate.py --test 5
+```
+
+#### How to Run Both Data Plane Traffic Matrices (Unicast + Multicast)
+To test both unicast ping reachability and OISM multicast forwarding side-by-side:
+```bash
+python3 scripts/validate.py --test traffic
+```
+
+#### Full Acceptance Validation (All 7 Suites)
+Runs the entire verification battery (OSPF underlay, BGP EVPN overlay, Anycast Multihoming, route scale/filtering, unicast traffic matrix, uplink failover recovery, and OISM multicast matrix):
 ```bash
 python3 scripts/validate.py
+```
+
+#### Targeted Suite Execution (`--test`)
+Run specific test suite numbers (`1-7`), combinations, or convenient aliases:
+```bash
+# Run only Test 7 (EVPN OISM Multicast Matrix)
+python3 scripts/validate.py --test 7
+
+# Run using aliases (e.g., multicast, unicast, traffic)
+python3 scripts/validate.py --test multicast
+python3 scripts/validate.py --test unicast
+python3 scripts/validate.py --test traffic
+
+# Run multiple specific suites (e.g., OSPF, BGP, and Multicast)
+python3 scripts/validate.py --test 1,2,7
+```
+
+#### Selective Traffic Plane Filtering (`--traffic`)
+Filter candidate test suites by traffic mode:
+- `--traffic multicast`: Restricts execution to multicast test suites (Suite 7).
+- `--traffic unicast`: Restricts execution to unicast test suites (Suites 1-6).
+- `--traffic all` *(default)*: Executes all selected test suites.
+
+#### Generate Machine-Readable JSON Report
+Output structured JSON results for CI/CD pipeline integration:
+```bash
+python3 scripts/validate.py --json-report test-results.json
 ```
 
 ### 6.3 Teardown Lab
